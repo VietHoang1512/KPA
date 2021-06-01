@@ -9,10 +9,10 @@
 kpm_data
 
 # stuff
-.flake8
-.isort.cfg
-.pre-commit-config.yaml
-pyproject.toml
+# .flake8
+# .isort.cfg
+# .pre-commit-config.yaml
+# pyproject.toml
 
 # led / optimized / DLL files
 __pycache__/
