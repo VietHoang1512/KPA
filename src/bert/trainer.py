@@ -127,19 +127,25 @@ class Trainer:
         num_train_epochs = self.args.num_train_epochs
 
         optimizer, scheduler = self.get_optimizers(num_training_steps=t_total)
+        model = self.model
 
         # Check if saved optimizer or scheduler states exist
         if (
             model_path is not None
             and os.path.isfile(os.path.join(model_path, "optimizer.pt"))
             and os.path.isfile(os.path.join(model_path, "scheduler.pt"))
+            and os.path.isfile(os.path.join(model_path, "model.pt"))
         ):
             # Load in optimizer and scheduler states
             optimizer.load_state_dict(torch.load(os.path.join(model_path, "optimizer.pt")))
             scheduler.load_state_dict(torch.load(os.path.join(model_path, "scheduler.pt")))
+            scheduler.load_state_dict(torch.load(os.path.join(model_path, "model.pt")))
+            logger.info("Loaded all previous model, optimizer, scheduler states")
+
         torch.save(self.args, os.path.join(self.args.output_dir, "training_args.bin"))
-        model = self.model
+
         model.to(self.args.device)
+
         if self.tb_writer is not None:
             self.tb_writer.add_text("args", self.args.to_json_string())
             self.tb_writer.add_hparams(self.args.to_sanitized_dict(), metric_dict={})

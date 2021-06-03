@@ -65,3 +65,8 @@ class BertKPAModel(nn.Module):
 
         loss = self.criterion(prob, label)
         return loss, prob
+
+
+if __name__ == "__main__":
+    model = BertKPAModel("roberta-base", 4)
+    print(model.eval())
