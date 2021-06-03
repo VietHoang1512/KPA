@@ -215,7 +215,7 @@ class Trainer:
             logs = dict()
 
             if self.args.evaluate_during_training:
-                logs["mAP_strict"], logs["mAP_relaxed"] = self.evaluate(val_dataset=self.val_inf_dataset)
+                logs["mAP_strict"], logs["mAP_relaxed"] = self.evaluate(model, val_dataset=self.val_inf_dataset)
                 epoch_iterator.set_postfix(**logs)
 
                 # Save model checkpoint
@@ -225,7 +225,7 @@ class Trainer:
 
                 self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
 
-            logs["VAL_LOSS"] = self.evaluate(display_loss=True)
+            logs["VAL_LOSS"] = self.evaluate(model, display_loss=True)
             logs["TRAIN_LOSS"] = total_train_loss.avg
             if self.tb_writer:
                 for k, v in logs.items():
@@ -247,8 +247,7 @@ class Trainer:
 
         outputs = model(**inputs)
 
-        loss = outputs[0]  # model outputs are always tuple in transformers (see BERTKPAModel)
-
+        loss = outputs[0]
         if self.args.gradient_accumulation_steps > 1:
             loss = loss / self.args.gradient_accumulation_steps
 
@@ -258,6 +257,7 @@ class Trainer:
 
     def evaluate(
         self,
+        model: nn.Module,
         val_dataset: Optional[Dataset] = None,
         display_loss: Optional[bool] = False,
     ) -> Dict[str, float]:
@@ -268,7 +268,7 @@ class Trainer:
         epoch_iterator = tqdm(val_dataloader, desc="Evaluating")
         total_val_loss = AverageMeter()
         for inputs in epoch_iterator:
-            val_loss, prob, n_val_samples = self._prediction_loop(inputs)
+            val_loss, prob, n_val_samples = self._prediction_loop(model, inputs)
             total_val_loss.update(val_loss, n_val_samples)
             predictions.extend(prob)
             if display_loss:
@@ -319,9 +319,9 @@ class Trainer:
             for k, v in inputs.items():
                 inputs[k] = v.to(self.args.device)
 
-        outputs = model(**inputs)
+            outputs = model(**inputs)
 
-        loss, prob = outputs  # model outputs are always tuple in transformers (see BERTKPAModel)
+        loss, prob = outputs
         prob = (
             prob.cpu()
             .detach()
@@ -336,11 +336,3 @@ class Trainer:
             loss = loss / self.args.gradient_accumulation_steps
 
         return loss.item(), prob, inputs[k].size(0)
-
-    def _save(self, output_dir: str = None):
-        output_dir = output_dir if output_dir is not None else self.args.output_dir
-        os.makedirs(output_dir, exist_ok=True)
-        logger.info("Saving model checkpoint to %s", output_dir)
-        # Save a trained model and configuration using `save_pretrained()`.
-        # They can then be reloaded using `from_pretrained()`
-        self.model.save_pretrained(output_dir)
