@@ -56,9 +56,8 @@ class TrainingArguments:
 
     logging_dir: str = field(default=None, metadata={"help": "Tensorboard log dir."})
 
-    no_cuda: bool = field(default=False, metadata={"help": "Do not use CUDA even when it is available"})
     seed: int = field(default=1512, metadata={"help": "random seed for initialization"})
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if not no_cuda else "cpu"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_workers: int = field(default=2, metadata={"help": "Number of workers for data loading."})
 
     def to_json_string(self):

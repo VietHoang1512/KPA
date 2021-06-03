@@ -8,9 +8,10 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm, trange
 from transformers import AdamW, get_linear_schedule_with_warmup
-from utils import constants
-from utils.data import evaluate_predictions
-from utils.train_utils import AverageMeter, EarlyStopping, seed_everything
+
+from src.utils import constants
+from src.utils.data import evaluate_predictions
+from src.utils.train_utils import AverageMeter, EarlyStopping
 
 from .training_argument import TrainingArguments
 
@@ -56,13 +57,13 @@ class Trainer:
         self.es = EarlyStopping(patience=self.args.early_stop, mode="max")
         if tb_writer is not None:
             self.tb_writer = tb_writer
-        elif is_tensorboard_available() and self.args.local_rank in [-1, 0]:
+        elif is_tensorboard_available():
             self.tb_writer = SummaryWriter(log_dir=self.args.logging_dir)
         if not is_tensorboard_available():
             logger.warning(
                 "You are instantiating a Trainer but Tensorboard is not installed. You should consider installing it."
             )
-        seed_everything(self.args.seed)
+
         os.makedirs(self.args.output_dir, exist_ok=True)
 
     def get_train_dataloader(self) -> DataLoader:
@@ -195,7 +196,7 @@ class Trainer:
                     steps_trained_in_current_epoch -= 1
                     continue
 
-                train_loss, n_train_samples = self._training_step(model, inputs, optimizer)
+                train_loss, n_train_samples = self._training_step(model, inputs)
 
                 total_train_loss.update(train_loss, n_train_samples)
                 epoch_iterator.set_postfix(TRAIN_LOSS=total_train_loss.avg)

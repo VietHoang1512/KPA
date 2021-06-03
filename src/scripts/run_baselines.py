@@ -36,12 +36,13 @@ if __name__ == "__main__":
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO,
     )
+    logger.warning("Device: %s", training_args.device)
     seed_everything(training_args.seed)
 
-    if model_args.tokenizer_name:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name)
-    elif model_args.model_name_or_path:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path)
+    if model_args.tokenizer:
+        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer)
+    elif model_args.model_name:
+        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported, but you can do it from another script, save it,"
@@ -49,7 +50,7 @@ if __name__ == "__main__":
         )
 
     model = BertKPAModel(
-        model_name=model_args.model_name,
+        bert_model=model_args.model_name,
         n_hiddens=model_args.n_hiddens,
         stance_dim=model_args.stance_dim,
         text_dim=model_args.text_dim,
@@ -66,6 +67,8 @@ if __name__ == "__main__":
 
     train_dataset = BertKPADataset(
         df=train_df,
+        arg_df=train_arg_df,
+        labels_df=train_labels_df,
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
@@ -73,6 +76,8 @@ if __name__ == "__main__":
     )
     val_dataset = BertKPADataset(
         df=val_df,
+        arg_df=val_arg_df,
+        labels_df=val_labels_df,
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
@@ -80,6 +85,8 @@ if __name__ == "__main__":
     )
     train_inf_dataset = BertKPADataset(
         df=train_inf_df,
+        arg_df=train_arg_df,
+        labels_df=train_labels_df,
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
@@ -87,6 +94,8 @@ if __name__ == "__main__":
     )
     val_inf_dataset = BertKPADataset(
         df=val_inf_df,
+        arg_df=val_arg_df,
+        labels_df=val_labels_df,
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
@@ -99,4 +108,13 @@ if __name__ == "__main__":
         train_dataset=train_dataset,
         val_dataset=val_dataset,
         train_inf_dataset=train_inf_dataset,
+        val_inf_dataset=val_inf_dataset,
     )
+    # Training
+    if training_args.do_train:
+        model_path = (
+            model_args.model_name_or_path
+            if model_args.model_name_or_path is not None and os.path.isdir(model_args.model_name_or_path)
+            else None
+        )
+        trainer.train(model_path=model_path)

@@ -22,7 +22,10 @@ class BertKPAModel(nn.Module):
         self.fc_argument = nn.Linear(config.hidden_size * self.n_hiddens, text_dim)
         self.bert_drop = nn.Dropout(drop_rate)
         self.fc = nn.Linear(stance_dim + 3 * text_dim, 1)
-        self.criterion = nn.BCELoss()
+
+    def criterion(self, preds, label):
+        label = label.view(-1, 1)
+        return nn.BCELoss()(preds, label)
 
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
         output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
@@ -70,3 +73,4 @@ class BertKPAModel(nn.Module):
 if __name__ == "__main__":
     model = BertKPAModel("roberta-base", 4)
     print(model.eval())
+    model.to("cuda")
