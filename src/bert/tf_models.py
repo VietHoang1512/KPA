@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 import tensorflow as tf
+import tensorflow.keras.backend as K
 from transformers import AutoConfig, TFAutoModel
 
 from src.bert.model_argument import ModelArguments
@@ -79,9 +80,15 @@ def build_model(
         tf.stack([bert_argument[2][-i][:, 0, :] for i in range(args.n_hiddens)], axis=1), axis=1
     )
 
-    bert_output = tf.keras.layers.Concatenate()([topic_output, key_point_output, argument_output])
+    # topic_output = tf.keras.layers.Dropout(drop_rate)(topic_output)
+    # key_point_output = tf.keras.layers.Dropout(drop_rate)(key_point_output)
+    # argument_output = tf.keras.layers.Dropout(drop_rate)(argument_output)
 
-    bert_output = tf.keras.layers.Dropout(args.drop_rate)(bert_output)
+    topic_keypoint = tf.keras.layers.Concatenate()([topic_output, key_point_output, stance])
+    argument = argument_output
+
+    topic_keypoint_rep = tf.keras.layers.Dense(args.text_dim)(topic_keypoint)
+    argument_rep = tf.keras.layers.Dense(args.text_dim)(argument)
 
     inputs = [
         topic_input_ids,
@@ -95,10 +102,21 @@ def build_model(
         argument_token_type_ids,
         stance,
     ]
+    sumSquared = K.sum(K.square(topic_keypoint_rep - argument_rep), axis=1, keepdims=True)
+    # return the euclidean distance between the vectors
 
-    outputs = tf.keras.layers.Concatenate()([bert_output, stance])
+    outputs = K.sqrt(K.maximum(sumSquared, K.epsilon()))
 
-    output = tf.keras.layers.Dense(1, activation="sigmoid")(outputs)
-    model = tf.keras.models.Model(inputs=inputs, outputs=output)
+    model = tf.keras.models.Model(inputs=inputs, outputs=outputs)
 
     return model
+
+
+def contrastive_loss(y, preds, margin=1):
+
+    y = tf.cast(y, preds.dtype)
+    squaredPreds = K.square(preds)
+    squaredMargin = K.square(K.maximum(margin - preds, 0))
+    loss = K.mean(y * squaredPreds + (1 - y) * squaredMargin)
+
+    return loss
