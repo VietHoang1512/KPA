@@ -7,7 +7,7 @@ from src.bert.model_argument import ModelArguments
 
 
 class ContrastiveLoss(torch.nn.Module):
-    def __init__(self, margin=2.0):
+    def __init__(self, margin=1.0):
         super(ContrastiveLoss, self).__init__()
         self.margin = margin
 
@@ -36,7 +36,8 @@ class BertKPAModel(nn.Module):
         self.bert_drop = nn.Dropout(args.drop_rate)
 
         self.fc_argument = nn.Linear(config.hidden_size * self.n_hiddens, args.text_dim)
-        self.fc_keypoint = nn.Linear(1 + 2 * config.hidden_size * self.n_hiddens, args.text_dim)
+        self.fc_stance = nn.Linear(1, args.stance_dim)
+        self.fc_keypoint = nn.Linear(args.stance_dim + 2 * config.hidden_size * self.n_hiddens, args.text_dim)
 
         self.criterion = ContrastiveLoss()
 
@@ -60,7 +61,7 @@ class BertKPAModel(nn.Module):
         stance,
         label,
     ):
-
+        stance_rep = self.fc_stance(stance)
         topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
         key_point_bert_output = self._forward_text(
             key_point_input_ids, key_point_attention_mask, key_point_token_type_ids
@@ -68,7 +69,7 @@ class BertKPAModel(nn.Module):
         argument_bert_output = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
 
         argument_rep = self.fc_argument(argument_bert_output)
-        keypoint_rep = torch.cat([stance, topic_bert_output, key_point_bert_output], axis=1)
+        keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
         keypoint_rep = self.fc_keypoint(keypoint_rep)
 
         argument_rep = F.normalize(argument_rep, p=2, dim=1)
