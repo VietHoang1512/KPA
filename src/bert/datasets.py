@@ -1,9 +1,31 @@
+from typing import List, Tuple
+
+import pandas as pd
 import torch
 from torch.utils.data import Dataset
+from transformers import PreTrainedTokenizer
 
 
 class BertKPADataset(Dataset):
-    def __init__(self, df, arg_df, labels_df, tokenizer, max_len, argument_max_len, mode):
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        arg_df: pd.DataFrame,
+        labels_df: pd.DataFrame,
+        tokenizer: PreTrainedTokenizer,
+        max_len: int,
+        argument_max_len: int,
+    ):
+        """Bert Keypoint Argument Dataset.
+
+        Args:
+            df (pd.DataFrame): Argument-keypoint pairs data frame
+            arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
+            labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
+            tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
+            max_len (int): Max len used for topic & keypoint padding & truncation
+            argument_max_len (int): Max len used for arguments
+        """
         self.df = df.copy()
         self.arg_df = arg_df.copy()
         self.labels_df = labels_df.copy()
@@ -15,12 +37,13 @@ class BertKPADataset(Dataset):
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.argument_max_len = argument_max_len
-        self.mode = mode
 
     def __len__(self):
+        """Denotes the number of examples per epoch."""
         return len(self.df)
 
     def __getitem__(self, idx):
+        """Generate one batch of data."""
         topic = self.topic[idx]
         argument = self.argument[idx]
         key_point = self.key_point[idx]
@@ -50,7 +73,7 @@ class BertKPADataset(Dataset):
 
         return sample
 
-    def _tokenize(self, text: str, max_len: int):
+    def _tokenize(self, text: str, max_len: int) -> Tuple[List[int], List[int], List[int]]:
         inputs = self.tokenizer.encode_plus(
             text,
             # add_special_tokens=True,
@@ -64,3 +87,22 @@ class BertKPADataset(Dataset):
         token_type_ids = inputs["token_type_ids"]
 
         return input_ids, attention_mask, token_type_ids
+
+
+if __name__ == "__main__":
+    from transformers import AutoTokenizer
+
+    from src.utils.data import get_data
+
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+    train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir="kpm_data", subset="train")
+    train_dataset = BertKPADataset(
+        df=train_df,
+        arg_df=train_arg_df,
+        labels_df=train_labels_df,
+        tokenizer=tokenizer,
+        max_len=24,
+        argument_max_len=48,
+    )
+    print(train_dataset[2])
+    print("DONE")

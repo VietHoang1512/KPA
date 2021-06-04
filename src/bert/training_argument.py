@@ -8,9 +8,7 @@ import torch
 
 @dataclass
 class TrainingArguments:
-    """
-    TrainingArguments is the subset of the arguments we use in our example scripts
-    """
+    """TrainingArguments is the subset of the arguments we use in our example scripts."""
 
     output_dir: str = field(
         metadata={"help": "The output directory where the model predictions and checkpoints will be written."}
@@ -26,7 +24,6 @@ class TrainingArguments:
     )
 
     do_train: bool = field(default=False, metadata={"help": "Whether to run training."})
-    # do_eval: bool = field(default=False, metadata={"help": "Whether to run eval on the dev set."})
     do_inference: bool = field(default=False, metadata={"help": "Whether to run predictions on the test set."})
     evaluate_during_training: bool = field(
         default=False,
@@ -61,16 +58,12 @@ class TrainingArguments:
     num_workers: int = field(default=2, metadata={"help": "Number of workers for data loading."})
 
     def to_json_string(self):
-        """
-        Serializes this instance to a JSON string.
-        """
+        """Serializes this instance to a JSON string."""
         return json.dumps(dataclasses.asdict(self), indent=2)
 
     def to_sanitized_dict(self) -> Dict[str, Any]:
-        """
-        Sanitized serialization to use with TensorBoard’s hparams
-        """
+        """Sanitized serialization to use with TensorBoard’s hparams."""
         d = dataclasses.asdict(self)
-        valid_types = [bool, int, float, str]
+        valid_types = (bool, int, float, str)
         valid_types.append(torch.Tensor)
-        return {k: v if type(v) in valid_types else str(v) for k, v in d.items()}
+        return {k: v if isinstance(v, valid_types) else str(v) for k, v in d.items()}

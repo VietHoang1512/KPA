@@ -72,7 +72,6 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
-        mode="train",
     )
     val_dataset = BertKPADataset(
         df=val_df,
@@ -81,7 +80,6 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
-        mode="val",
     )
     train_inf_dataset = BertKPADataset(
         df=train_inf_df,
@@ -90,7 +88,6 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
-        mode="val",
     )
     val_inf_dataset = BertKPADataset(
         df=val_inf_df,
@@ -99,7 +96,6 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         max_len=data_args.max_len,
         argument_max_len=data_args.argument_max_len,
-        mode="val",
     )
 
     trainer = Trainer(

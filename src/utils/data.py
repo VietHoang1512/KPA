@@ -103,7 +103,7 @@ def get_data(gold_data_dir: str, subset: str) -> pd.DataFrame:
 
 
 def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.DataFrame:
-    """Pair up argmument and keypont to generate score
+    """Pair up argmument and keypont to generate score.
 
     Args:
         arg_df (pd.DataFrame): Arguments dataframe by topic and stance

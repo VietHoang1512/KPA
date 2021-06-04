@@ -1,6 +1,4 @@
-"""
-    My signature
-"""
+"""My signature."""
 
 import os
 

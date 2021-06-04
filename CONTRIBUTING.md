@@ -6,7 +6,7 @@ Thank you for considering contributing to `KPA`. It is much appreciated. Read th
 
 Set up the development environment
 
-```
+```sh
 git clone git@github.com:VietHoang1512/KPA.git
 cd KPA
 pip install -r requirements.txt

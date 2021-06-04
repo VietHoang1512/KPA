@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 def seed_everything(seed: int) -> None:
-    """
-    Seed for reproceducing
+    """Seed for reproceducing.
+
     Args:
         seed (int): seed number
     """
@@ -25,6 +25,7 @@ def seed_everything(seed: int) -> None:
 
 class AverageMeter(object):
     def __init__(self):
+        """Average Meter class for Pytorch experiments."""
         self.reset()
 
     def reset(self):
@@ -42,6 +43,8 @@ class AverageMeter(object):
 
 class EarlyStopping:
     def __init__(self, patience: int = 7, mode: str = "max", delta: float = 0):
+
+        """Early stopping when the criterion met."""
         self.patience = patience
         self.counter = 0
         self.mode = mode

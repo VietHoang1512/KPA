@@ -12,6 +12,7 @@ DataClassType = NewType("DataClassType", Any)
 
 class HfArgumentParser(ArgumentParser):
     """
+
     This subclass of `argparse.ArgumentParser` uses type hints on dataclasses
     to generate arguments.
     The class is designed to play well with the native argparse. In particular,
