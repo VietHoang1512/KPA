@@ -64,6 +64,6 @@ class TrainingArguments:
     def to_sanitized_dict(self) -> Dict[str, Any]:
         """Sanitized serialization to use with TensorBoard’s hparams."""
         d = dataclasses.asdict(self)
-        valid_types = (bool, int, float, str)
+        valid_types = [bool, int, float, str]
         valid_types.append(torch.Tensor)
-        return {k: v if isinstance(v, valid_types) else str(v) for k, v in d.items()}
+        return {k: v if isinstance(v, tuple(valid_types)) else str(v) for k, v in d.items()}

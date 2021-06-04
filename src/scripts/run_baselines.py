@@ -49,12 +49,7 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer_name"
         )
 
-    model = BertKPAModel(
-        bert_model=model_args.model_name,
-        n_hiddens=model_args.n_hiddens,
-        stance_dim=model_args.stance_dim,
-        text_dim=model_args.text_dim,
-    )
+    model = BertKPAModel(args=model_args)
 
     train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir="kpm_data", subset="train")
     val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir="kpm_data", subset="dev")
@@ -62,40 +57,36 @@ if __name__ == "__main__":
     train_inf_df = prepare_inference_data(train_arg_df, train_kp_df)
     val_inf_df = prepare_inference_data(val_arg_df, val_kp_df)
 
-    train_df.to_csv("train.csv", index=False)
-    val_df.to_csv("val.csv", index=False)
+    # train_df.to_csv("train.csv", index=False)
+    # val_df.to_csv("val.csv", index=False)
 
     train_dataset = BertKPADataset(
         df=train_df,
         arg_df=train_arg_df,
         labels_df=train_labels_df,
         tokenizer=tokenizer,
-        max_len=data_args.max_len,
-        argument_max_len=data_args.argument_max_len,
+        args=data_args,
     )
     val_dataset = BertKPADataset(
         df=val_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
         tokenizer=tokenizer,
-        max_len=data_args.max_len,
-        argument_max_len=data_args.argument_max_len,
+        args=data_args,
     )
     train_inf_dataset = BertKPADataset(
         df=train_inf_df,
         arg_df=train_arg_df,
         labels_df=train_labels_df,
         tokenizer=tokenizer,
-        max_len=data_args.max_len,
-        argument_max_len=data_args.argument_max_len,
+        args=data_args,
     )
     val_inf_dataset = BertKPADataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
         tokenizer=tokenizer,
-        max_len=data_args.max_len,
-        argument_max_len=data_args.argument_max_len,
+        args=data_args,
     )
 
     trainer = Trainer(
