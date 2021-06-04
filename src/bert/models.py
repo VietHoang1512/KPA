@@ -3,25 +3,27 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 
+from src.bert.model_argument import ModelArguments
+
 
 class BertKPAModel(nn.Module):
-    def __init__(self, bert_model, n_hiddens, stance_dim=32, drop_rate=0.0, text_dim=32):
+    def __init__(self, args: ModelArguments):
+
         super().__init__()
 
-        self.fc_stance = nn.Linear(1, stance_dim)
-
         config = AutoConfig.from_pretrained(
-            bert_model,
+            args.model_name,
             from_tf=False,
             output_hidden_states=True,
         )
-        self.bert_model = AutoModel.from_pretrained(bert_model, config=config)
-        self.n_hiddens = n_hiddens
-        self.fc_topic = nn.Linear(config.hidden_size * self.n_hiddens, text_dim)
-        self.fc_key_point = nn.Linear(config.hidden_size * self.n_hiddens, text_dim)
-        self.fc_argument = nn.Linear(config.hidden_size * self.n_hiddens, text_dim)
-        self.bert_drop = nn.Dropout(drop_rate)
-        self.fc = nn.Linear(stance_dim + 3 * text_dim, 1)
+        self.bert_model = AutoModel.from_pretrained(args.model_name, config=config)
+        self.n_hiddens = args.n_hiddens
+        self.fc_topic = nn.Linear(config.hidden_size * self.n_hiddens, args.text_dim)
+        self.fc_key_point = nn.Linear(config.hidden_size * self.n_hiddens, args.text_dim)
+        self.fc_argument = nn.Linear(config.hidden_size * self.n_hiddens, args.text_dim)
+        self.fc_stance = nn.Linear(1, args.stance_dim)
+        self.bert_drop = nn.Dropout(args.drop_rate)
+        self.fc = nn.Linear(args.stance_dim + 3 * args.text_dim, 1)
 
     def criterion(self, preds, label):
         label = label.view(-1, 1)
@@ -68,9 +70,3 @@ class BertKPAModel(nn.Module):
 
         loss = self.criterion(prob, label)
         return loss, prob
-
-
-if __name__ == "__main__":
-    model = BertKPAModel("roberta-base", 4)
-    print(model.eval())
-    model.to("cuda")

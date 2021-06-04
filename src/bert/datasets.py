@@ -5,6 +5,8 @@ import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
+from src.bert.data_argument import DataArguments
+
 
 class BertKPADataset(Dataset):
     def __init__(
@@ -13,8 +15,7 @@ class BertKPADataset(Dataset):
         arg_df: pd.DataFrame,
         labels_df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        max_len: int,
-        argument_max_len: int,
+        args: DataArguments,
     ):
         """Bert Keypoint Argument Dataset.
 
@@ -23,8 +24,7 @@ class BertKPADataset(Dataset):
             arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
             labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            max_len (int): Max len used for topic & keypoint padding & truncation
-            argument_max_len (int): Max len used for arguments
+            args (DataArguments): Data Argument
         """
         self.df = df.copy()
         self.arg_df = arg_df.copy()
@@ -35,8 +35,8 @@ class BertKPADataset(Dataset):
         self.label = df["label"].values
         self.stance = df["stance"].values
         self.tokenizer = tokenizer
-        self.max_len = max_len
-        self.argument_max_len = argument_max_len
+        self.max_len = args.max_len
+        self.argument_max_len = args.argument_max_len
 
     def __len__(self):
         """Denotes the number of examples per epoch."""
