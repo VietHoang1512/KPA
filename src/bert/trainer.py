@@ -275,6 +275,7 @@ class Trainer:
                 epoch_iterator.set_postfix(VAL_LOSS=total_val_loss.avg)
 
         val_df["label"] = predictions
+        val_df["label"] = val_df["label"].map(lambda x: 1 - x)
         if not display_loss:
             return self.calculate_metric(val_df, val_dataloader.dataset.labels_df, val_dataloader.dataset.arg_df)
         else:
