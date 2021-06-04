@@ -216,7 +216,7 @@ class Trainer:
 
             if self.args.evaluate_during_training:
                 logs["mAP_strict"], logs["mAP_relaxed"] = self.evaluate(model, val_dataset=self.val_inf_dataset)
-                epoch_iterator.set_postfix(**logs)
+                epoch_iterator.set_postfix(mAP_strict=logs["mAP_strict"], mAP_relaxed=logs["mAP_relaxed"])
 
                 # Save model checkpoint
                 output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
