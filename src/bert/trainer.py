@@ -82,10 +82,10 @@ class Trainer:
     def get_optimizers(
         self, num_training_steps: int
     ) -> Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR]:
-        """
-        Setup the optimizer and the learning rate scheduler.
-        We provide a reasonable default that works well.
-        If you want to use something else, you can pass a tuple in the Trainer's init,
+        """Setup the optimizer and the learning rate scheduler.
+
+        We provide a reasonable default that works well. If you want to
+        use something else, you can pass a tuple in the Trainer's init,
         or override this method in a subclass.
         """
         if self.optimizers is not None:
@@ -109,14 +109,13 @@ class Trainer:
         return optimizer, scheduler
 
     def num_examples(self, dataloader: DataLoader) -> int:
-        """
-        Helper to get num of examples from a DataLoader, by accessing its Dataset.
-        """
+        """Helper to get num of examples from a DataLoader, by accessing its
+        Dataset."""
         return len(dataloader.dataset)
 
     def train(self, model_path: str = None):
-        """
-        Main training entry point.
+        """Main training entry point.
+
         Args:
             model_path:
                 (Optional) Local path to model if model to train has been instantiated from a local path
@@ -275,7 +274,6 @@ class Trainer:
                 epoch_iterator.set_postfix(VAL_LOSS=total_val_loss.avg)
 
         val_df["label"] = predictions
-        val_df["label"] = val_df["label"].map(lambda x: 1 - x)
         if not display_loss:
             return self.calculate_metric(val_df, val_dataloader.dataset.labels_df, val_dataloader.dataset.arg_df)
         else:
