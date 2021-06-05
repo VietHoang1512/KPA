@@ -26,15 +26,19 @@ class BertKPAModel(nn.Module):
         self.n_hiddens = args.n_hiddens
         self.bert_drop = nn.Dropout(args.drop_rate)
 
-        self.fc_argument = nn.Linear(config.hidden_size * self.n_hiddens, args.text_dim)
-        self.fc_stance = nn.Linear(1, args.stance_dim)
-        self.fc_keypoint = nn.Linear(args.stance_dim + 2 * config.hidden_size * self.n_hiddens, args.text_dim)
+        self.fc_argument = nn.Sequential(
+            nn.Linear(config.hidden_size * self.n_hiddens, args.text_dim), nn.ReLU(inplace=True)
+        )
+        self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
+        self.fc_keypoint = nn.Sequential(
+            nn.Linear(args.stance_dim + 2 * config.hidden_size * self.n_hiddens, args.text_dim), nn.ReLU(inplace=True)
+        )
 
         self.criterion = ContrastiveLoss(margin=args.margin)
 
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
         output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        output = torch.mean(torch.cat([output[2][-i] for i in range(self.n_hiddens)], axis=-1), axis=1)
+        output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
         output = self.bert_drop(output)
         return output
 
