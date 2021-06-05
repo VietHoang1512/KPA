@@ -68,7 +68,9 @@ class EarlyStopping:
             self.save_checkpoint(epoch_score, model, optimizer, scheduler, output_dir)
             return True
         elif score < self.best_score + self.delta:
+
             self.counter += 1
+            print("Validation score: {} which is not an improvement from {}".format(score, self.best_score))
             print("EarlyStopping counter: {} out of {}".format(self.counter, self.patience))
             if self.counter >= self.patience:
                 self.early_stop = True

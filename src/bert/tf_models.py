@@ -107,7 +107,8 @@ def build_model(
 
     outputs = K.sqrt(K.maximum(sumSquared, K.epsilon()))
 
-    model = tf.keras.models.Model(inputs=inputs, outputs=outputs)
+    output = tf.keras.layers.Dense(1, activation="sigmoid")(outputs)
+    model = tf.keras.models.Model(inputs=inputs, outputs=output)
 
     return model
 

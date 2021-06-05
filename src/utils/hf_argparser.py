@@ -11,13 +11,13 @@ DataClassType = NewType("DataClassType", Any)
 
 
 class HfArgumentParser(ArgumentParser):
-    """
+    """This subclass of `argparse.ArgumentParser` uses type hints on
+    dataclasses to generate arguments.
 
-    This subclass of `argparse.ArgumentParser` uses type hints on dataclasses
-    to generate arguments.
-    The class is designed to play well with the native argparse. In particular,
-    you can add more (non-dataclass backed) arguments to the parser after initialization
-    and you'll get the output back after parsing as an additional namespace.
+    The class is designed to play well with the native argparse. In
+    particular, you can add more (non-dataclass backed) arguments to the
+    parser after initialization and you'll get the output back after
+    parsing as an additional namespace.
     """
 
     dataclass_types: Iterable[DataClassType]
@@ -125,10 +125,8 @@ class HfArgumentParser(ArgumentParser):
             return (*outputs,)
 
     def parse_json_file(self, json_file: str) -> Tuple[DataClass, ...]:
-        """
-        Alternative helper method that does not use `argparse` at all,
-        instead loading a json file and populating the dataclass types.
-        """
+        """Alternative helper method that does not use `argparse` at all,
+        instead loading a json file and populating the dataclass types."""
         data = json.loads(Path(json_file).read_text())
         outputs = []
         for dtype in self.dataclass_types:
