@@ -3,27 +3,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 
+from src.bert.losses import ContrastiveLoss
 from src.bert.model_argument import ModelArguments
-
-
-class ContrastiveLoss(torch.nn.Module):
-    def __init__(self, margin=1.0):
-        super(ContrastiveLoss, self).__init__()
-        self.margin = margin
-
-    def forward(self, euclidean_distance, label):
-
-        loss_contrastive = torch.mean(
-            (1 - label) * torch.pow(euclidean_distance, 2)
-            + (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2)
-        )
-
-        return loss_contrastive
 
 
 class BertKPAModel(nn.Module):
     def __init__(self, args: ModelArguments):
+        """Simple Bert Siamese Model.
 
+        Args:
+            args (ModelArguments): Bert Model Argument
+        """
         super().__init__()
 
         config = AutoConfig.from_pretrained(
@@ -31,6 +21,7 @@ class BertKPAModel(nn.Module):
             from_tf=False,
             output_hidden_states=True,
         )
+        self.args = args
         self.bert_model = AutoModel.from_pretrained(args.model_name, config=config)
         self.n_hiddens = args.n_hiddens
         self.bert_drop = nn.Dropout(args.drop_rate)
@@ -39,7 +30,7 @@ class BertKPAModel(nn.Module):
         self.fc_stance = nn.Linear(1, args.stance_dim)
         self.fc_keypoint = nn.Linear(args.stance_dim + 2 * config.hidden_size * self.n_hiddens, args.text_dim)
 
-        self.criterion = ContrastiveLoss()
+        self.criterion = ContrastiveLoss(margin=args.margin)
 
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
         output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
@@ -74,7 +65,8 @@ class BertKPAModel(nn.Module):
 
         argument_rep = F.normalize(argument_rep, p=2, dim=1)
         keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
-        euclidean_distance = F.pairwise_distance(argument_rep, keypoint_rep)
 
-        loss = self.criterion(euclidean_distance, label)
-        return loss, euclidean_distance
+        loss = self.criterion(argument_rep, keypoint_rep, label)
+
+        similarity = F.relu(self.args.margin - (argument_rep - keypoint_rep).pow(2).sum(1)) / self.args.margin
+        return loss, similarity

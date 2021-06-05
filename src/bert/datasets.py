@@ -26,7 +26,8 @@ class BertKPADataset(Dataset):
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
             args (DataArguments): Data Argument
         """
-        self.df = df.copy()
+        df = df.copy()
+        self.df = df
         self.arg_df = arg_df.copy()
         self.labels_df = labels_df.copy()
         self.topic = df["topic"].values

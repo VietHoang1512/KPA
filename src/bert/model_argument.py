@@ -4,7 +4,8 @@ from typing import Optional
 
 @dataclass
 class ModelArguments:
-    """Arguments pertaining to which model/config/tokenizer we are going to fine-tune, or train from scratch."""
+    """Arguments pertaining to which model/config/tokenizer we are going to
+    fine- tune, or train from scratch."""
 
     model_name_or_path: Optional[str] = field(
         default=None,
@@ -25,3 +26,4 @@ class ModelArguments:
     stance_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding stance."})
     text_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding text."})
     drop_rate: float = field(default=0.1, metadata={"help": "Model dropout rate."})
+    margin: float = field(default=1.0, metadata={"help": "Margin distance value."})

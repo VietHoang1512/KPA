@@ -46,7 +46,7 @@ if __name__ == "__main__":
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported, but you can do it from another script, save it,"
-            "and load it from here, using --tokenizer_name"
+            "and load it from here, using --tokenizer"
         )
 
     model = BertKPAModel(args=model_args)
