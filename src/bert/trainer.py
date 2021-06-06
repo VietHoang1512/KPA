@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from typing import Dict, Optional, Tuple
@@ -75,7 +76,7 @@ class Trainer:
     def get_val_dataloader(self, val_dataset: Dataset = None) -> DataLoader:
         val_dataset = val_dataset if val_dataset is not None else self.val_dataset
         data_loader = DataLoader(
-            val_dataset, batch_size=self.args.val_batch_size, shuffle=True, num_workers=self.args.num_workers
+            val_dataset, batch_size=self.args.val_batch_size, shuffle=False, num_workers=self.args.num_workers
         )
         return data_loader
 
@@ -186,6 +187,7 @@ class Trainer:
         train_iterator = trange(epochs_trained, int(num_train_epochs), desc="Epoch")
         for epoch, _ in enumerate(train_iterator):
             epoch_iterator = tqdm(train_dataloader, desc="Training")
+            epoch_iterator.set_postfix(lr=optimizer.param_groups[0]["lr"])
             total_train_loss = AverageMeter()
 
             for step, inputs in enumerate(epoch_iterator):
@@ -214,22 +216,35 @@ class Trainer:
             logs = dict()
 
             if self.args.evaluate_during_training:
-                logs["mAP_strict"], logs["mAP_relaxed"] = self.evaluate(model, val_dataset=self.val_inf_dataset)
+                logs["VAL_LOSS"] = self.evaluate(model, display_loss=True)
+                logs["mAP_strict"], logs["mAP_relaxed"], prediction = self.evaluate(
+                    model, val_dataset=self.val_inf_dataset
+                )
+
                 epoch_iterator.set_postfix(mAP_strict=logs["mAP_strict"], mAP_relaxed=logs["mAP_relaxed"])
 
                 # Save model checkpoint
-                output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
+                output_dir = os.path.join(self.args.output_dir, "best_model")
                 os.makedirs(output_dir, exist_ok=True)
-                logger.info("Saving model checkpoint to %s", output_dir)
-
                 self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
+                if self.es.is_best:
+                    self._save_prediction(prediction=prediction, output_dir=output_dir)
 
-            logs["VAL_LOSS"] = self.evaluate(model, display_loss=True)
+            # Save model after each epoch
+            output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
+            os.makedirs(output_dir, exist_ok=True)
+            logger.info("Saving optimizer and scheduler states to %s", output_dir)
+            torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+            torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+            torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
+
             logs["TRAIN_LOSS"] = total_train_loss.avg
             if self.tb_writer:
                 for k, v in logs.items():
                     self.tb_writer.add_scalar(k, v, epoch)
-
+        if self.args.do_inference:
+            # TODO: inference
+            pass
         if self.tb_writer:
             self.tb_writer.close()
 
@@ -309,7 +324,12 @@ class Trainer:
         merged_df.loc[merged_df["key_point_id"] == "dummy_id", "label"] = 0
         merged_df["label_strict"] = merged_df["label"].fillna(0)
         merged_df["label_relaxed"] = merged_df["label"].fillna(1)
-        return evaluate_predictions(merged_df)
+        return evaluate_predictions(merged_df), predictions
+
+    def _save_prediction(self, prediction, output_dir):
+        with open(os.path.join(output_dir, "prediction.p"), "w") as f:
+            json.dump(prediction, f, indent=4)
+        logger.info(f"Saved prediction to {output_dir}")
 
     def _prediction_loop(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
 

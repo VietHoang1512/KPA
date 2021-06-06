@@ -51,6 +51,7 @@ class EarlyStopping:
         self.best_score = None
         self.early_stop = False
         self.delta = delta
+        self.is_best = True
         if self.mode == "min":
             self.val_score = np.Inf
         else:
@@ -65,10 +66,11 @@ class EarlyStopping:
 
         if self.best_score is None:
             self.best_score = score
+            self.is_best = True
             self.save_checkpoint(epoch_score, model, optimizer, scheduler, output_dir)
             return True
         elif score < self.best_score + self.delta:
-
+            self.is_best = False
             self.counter += 1
             print("Validation score: {} which is not an improvement from {}".format(score, self.best_score))
             print("EarlyStopping counter: {} out of {}".format(self.counter, self.patience))
@@ -86,7 +88,7 @@ class EarlyStopping:
                     self.val_score, epoch_score, output_dir
                 )
             )
-            logger.info("Saving optimizer and scheduler states to %s", output_dir)
+            logger.info("Saving best optimizer and scheduler states to %s", output_dir)
             torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
             torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
             torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
