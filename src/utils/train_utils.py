@@ -96,5 +96,5 @@ class EarlyStopping:
         self.val_score = epoch_score
 
 
-def count_parameters(model) -> int:
+def count_parameters(model: torch.nn.Module) -> int:
     return sum(p.numel() for p in model.parameters() if p.requires_grad is True)

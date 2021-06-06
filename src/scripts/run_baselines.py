@@ -11,7 +11,7 @@ from src.bert.trainer import Trainer
 from src.bert.training_argument import TrainingArguments
 from src.utils.data import get_data, prepare_inference_data
 from src.utils.hf_argparser import HfArgumentParser
-from src.utils.train_utils import seed_everything
+from src.utils.train_utils import count_parameters, seed_everything
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,9 @@ if __name__ == "__main__":
         )
 
     model = BertKPAModel(args=model_args)
-
-    train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir="kpm_data", subset="train")
-    val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir="kpm_data", subset="dev")
+    logger.info(f"Num param: {count_parameters(model)}")
+    train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir=data_args.directory, subset="train")
+    val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir=data_args.directory, subset="dev")
 
     train_inf_df = prepare_inference_data(train_arg_df, train_kp_df)
     val_inf_df = prepare_inference_data(val_arg_df, val_kp_df)

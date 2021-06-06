@@ -28,7 +28,9 @@ class BertKPAModel(nn.Module):
         self.bert_drop = nn.Dropout(args.drop_rate)
 
         self.fc_text = nn.Sequential(
-            nn.Linear(args.stance_dim + 2 * config.hidden_size * self.n_hiddens, args.text_dim), nn.ReLU(inplace=True)
+            nn.Linear(args.stance_dim + 2 * config.hidden_size * self.n_hiddens, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, args.text_dim),
         )
         self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
 
@@ -95,7 +97,7 @@ class BertKPAClassificationModel(nn.Module):
         self.n_hiddens = args.n_hiddens
         self.bert_drop = nn.Dropout(args.drop_rate)
 
-        self.fc_text = nn.Sequential(
+        self.fc = nn.Sequential(
             nn.Linear(args.stance_dim + 3 * config.hidden_size * self.n_hiddens, 1), nn.ReLU(inplace=True)
         )
         self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))

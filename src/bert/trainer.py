@@ -345,7 +345,7 @@ class Trainer:
 
     @classmethod
     def _save_prediction(self, prediction, output_dir):
-        with open(os.path.join(output_dir, "prediction.p"), "w") as f:
+        with open(os.path.join(output_dir, "predictions.p"), "w") as f:
             json.dump(prediction, f, indent=4)
         logger.info(f"Saved prediction to {output_dir}")
 
