@@ -16,25 +16,26 @@ def pdist(vectors):
 
 
 class PairSelector:
-    """Implementation should return indices of positive pairs and negative
-    pairs that will be passed to compute Contrastive Loss return
-    positive_pairs, negative_pairs."""
-
     def __init__(self):
-        pass
+        """
+        Implementation should return indices of positive pairs and negative pairs.
+
+        Pass to compute Contrastive Loss return
+        positive_pairs, negative_pairs.
+        """
 
     def get_pairs(self, embeddings, labels):
         raise NotImplementedError
 
 
 class AllPositivePairSelector(PairSelector):
-    """Discards embeddings and generates all possible pairs given labels.
-
-    If balance is True, negative pairs are a random sample to match the
-    number of positive samples
-    """
-
     def __init__(self, balance=True):
+        """
+        Discards embeddings and generates all possible pairs given labels.
+
+        If balance is True, negative pairs are a random sample to match the
+        number of positive samples
+        """
         super(AllPositivePairSelector, self).__init__()
         self.balance = balance
 
@@ -51,13 +52,13 @@ class AllPositivePairSelector(PairSelector):
 
 
 class HardNegativePairSelector(PairSelector):
-    """Creates all possible positive pairs.
-
-    For negative pairs, pairs with smallest distance are taken into
-    consideration, matching the number of positive pairs.
-    """
-
     def __init__(self, cpu=True):
+        """
+        Creates all possible positive pairs.
+
+        For negative pairs, pairs with smallest distance are taken into
+        consideration, matching the number of positive pairs.
+        """
         super(HardNegativePairSelector, self).__init__()
         self.cpu = cpu
 
@@ -81,10 +82,11 @@ class HardNegativePairSelector(PairSelector):
 
 
 class ContrastiveLoss(nn.Module):
-    """Contrastive loss Takes embeddings of two samples and a target label == 1
-    if samples are from the same class and label == 0 otherwise."""
-
     def __init__(self, margin):
+        """
+        Contrastive loss Takes embeddings of two samples and a target
+        label == 1 if samples are from the same class and label == 0 otherwise.
+        """
         super(ContrastiveLoss, self).__init__()
         self.margin = margin
         self.eps = 1e-9
@@ -99,14 +101,13 @@ class ContrastiveLoss(nn.Module):
 
 
 class OnlineContrastiveLoss(nn.Module):
-    """Online Contrastive loss Takes a batch of embeddings and corresponding
-    labels.
-
-    Pairs are generated using pair_selector object that take embeddings
-    and targets and return indices of positive and negative pairs
-    """
-
     def __init__(self, margin, pair_selector):
+        """
+        Online Contrastive loss Takes a batch of embeddings and corresponding labels.
+
+        Pairs are generated using pair_selector object that take embeddings
+        and targets and return indices of positive and negative pairs
+        """
         super(OnlineContrastiveLoss, self).__init__()
         self.margin = margin
         self.pair_selector = pair_selector

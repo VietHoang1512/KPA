@@ -8,6 +8,7 @@ import torch
 
 @dataclass
 class TrainingArguments:
+
     """TrainingArguments is the subset of the arguments we use in our example
     scripts."""
 

@@ -48,6 +48,20 @@ class Trainer:
         tb_writer: Optional["SummaryWriter"] = None,
         optimizers: Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR] = None,
     ):
+        """
+        A simple but feature-complete training and eval loop for KPA  Model.
+
+        Args:
+            model (nn.Module): The model to train, evaluate or use for predictions
+            args (TrainingArguments): The arguments to tweak for training
+            train_dataset (Dataset): The dataset to use for training
+            val_dataset (Dataset): The dataset to use for evaluation
+            train_inf_dataset (Dataset): The dataset to use for evaluation with organizer scripts (corresponding to train dataset)
+            val_inf_dataset (Dataset): The dataset to use for evaluation with organizer scripts (corresponding to validation dataset)
+            tb_writer (Optional[, optional): [description]. Defaults to None. Tensorboard writer
+            optimizers (Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR], optional): [description]. Defaults to None.A tuple
+            containing the optimizer and the scheduler to use
+        """
         self.args = args
         self.model = model
         self.train_dataset = train_dataset
@@ -83,7 +97,8 @@ class Trainer:
     def get_optimizers(
         self, num_training_steps: int
     ) -> Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR]:
-        """Setup the optimizer and the learning rate scheduler.
+        """
+        Setup the optimizer and the learning rate scheduler.
 
         We provide a reasonable default that works well. If you want to
         use something else, you can pass a tuple in the Trainer's init,
@@ -109,13 +124,14 @@ class Trainer:
         )
         return optimizer, scheduler
 
+    @classmethod
     def num_examples(self, dataloader: DataLoader) -> int:
-        """Helper to get num of examples from a DataLoader, by accessing its
-        Dataset."""
+        """Helper to get num of examples from a DataLoader, by accessing its Dataset."""
         return len(dataloader.dataset)
 
     def train(self, model_path: str = None):
-        """Main training entry point.
+        """
+        Main training entry point.
 
         Args:
             model_path:
@@ -217,7 +233,7 @@ class Trainer:
 
             if self.args.evaluate_during_training:
                 logs["VAL_LOSS"] = self.evaluate(model, display_loss=True)
-                logs["mAP_strict"], logs["mAP_relaxed"], prediction = self.evaluate(
+                (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
                     model, val_dataset=self.val_inf_dataset
                 )
 
@@ -294,6 +310,7 @@ class Trainer:
         else:
             return total_val_loss.avg
 
+    @classmethod
     def calculate_metric(self, val_df: pd.DataFrame, labels_df: pd.DataFrame, arg_df: pd.DataFrame):
         arg_df = arg_df[["arg_id", "topic", "stance"]].copy()
 
@@ -326,6 +343,7 @@ class Trainer:
         merged_df["label_relaxed"] = merged_df["label"].fillna(1)
         return evaluate_predictions(merged_df), predictions
 
+    @classmethod
     def _save_prediction(self, prediction, output_dir):
         with open(os.path.join(output_dir, "prediction.p"), "w") as f:
             json.dump(prediction, f, indent=4)

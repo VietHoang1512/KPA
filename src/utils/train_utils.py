@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 def seed_everything(seed: int) -> None:
-    """Seed for reproceducing.
+    """
+    Seed for reproceducing.
 
     Args:
         seed (int): seed number
@@ -43,7 +44,6 @@ class AverageMeter(object):
 
 class EarlyStopping:
     def __init__(self, patience: int = 7, mode: str = "max", delta: float = 0):
-
         """Early stopping when the criterion met."""
         self.patience = patience
         self.counter = 0
