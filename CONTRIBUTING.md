@@ -17,6 +17,6 @@ pre-commit install
 ## Coding styles
 
 Run `pre-commit install` to install pre-commit into your git hooks. pre-commit will now run on every commit. Otherwise you could manually run all pre-commit hooks for all files:
-``` 
+```sh
 pre-commit run --all-files 
 ```

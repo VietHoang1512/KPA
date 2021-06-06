@@ -9,7 +9,8 @@ from src.bert.model_argument import ModelArguments
 
 class BertKPAModel(nn.Module):
     def __init__(self, args: ModelArguments):
-        """Simple Bert Siamese Model.
+        """
+        Simple Bert Siamese Model.
 
         Args:
             args (ModelArguments): Bert Model Argument
@@ -76,7 +77,8 @@ class BertKPAModel(nn.Module):
 
 class BertKPAClassificationModel(nn.Module):
     def __init__(self, args: ModelArguments):
-        """Simple Bert Classification Model.
+        """
+        Simple Bert Classification Model.
 
         Args:
             args (ModelArguments): Bert Model Argument
@@ -98,6 +100,7 @@ class BertKPAClassificationModel(nn.Module):
         )
         self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
 
+    @classmethod
     def criterion(self, preds, label):
         label = label.view(-1, 1)
         return nn.BCELoss()(preds, label)

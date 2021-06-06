@@ -58,12 +58,6 @@ def get_predictions(predictions_file: str, labels_df: pd.DataFrame, arg_df: pd.D
     return merged_df
 
 
-"""
-this method chooses the best key point for each argument
-and generates a dataframe with the matches and scores
-"""
-
-
 def load_predictions(predictions_dir: str) -> pd.DataFrame:
     arg = []
     kp = []
@@ -103,7 +97,8 @@ def get_data(gold_data_dir: str, subset: str) -> pd.DataFrame:
 
 
 def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.DataFrame:
-    """Pair up argmument and keypont to generate score.
+    """
+    Pair up argmument and keypont to generate score.
 
     Args:
         arg_df (pd.DataFrame): Arguments dataframe by topic and stance
@@ -112,7 +107,6 @@ def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.Data
     Returns:
         pd.DataFrame: All possible argmument-keypont pair
     """
-
     topic_id2topic = pd.Series(arg_df.topic, index=arg_df.topic_id).to_dict()
     topic_id2argument = {topic_id: [] for topic_id in arg_df.topic_id.unique()}
     topic_id2keypoint = {topic_id: [] for topic_id in arg_df.topic_id.unique()}

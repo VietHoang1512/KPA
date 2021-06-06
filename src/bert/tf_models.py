@@ -22,6 +22,7 @@ def contrastive_loss(y, preds, margin=1):
 def seed_all(seed=1512):
     """
     Set seed for reproducing result
+
     Args:
         seed (int, optional): seed number. Defaults to 1512.
     """

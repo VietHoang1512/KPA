@@ -17,7 +17,8 @@ class BertKPADataset(Dataset):
         tokenizer: PreTrainedTokenizer,
         args: DataArguments,
     ):
-        """Bert Keypoint Argument Dataset.
+        """
+        Bert Keypoint Argument Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
@@ -88,22 +89,3 @@ class BertKPADataset(Dataset):
         token_type_ids = inputs["token_type_ids"]
 
         return input_ids, attention_mask, token_type_ids
-
-
-if __name__ == "__main__":
-    from transformers import AutoTokenizer
-
-    from src.utils.data import get_data
-
-    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
-    train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir="kpm_data", subset="train")
-    train_dataset = BertKPADataset(
-        df=train_df,
-        arg_df=train_arg_df,
-        labels_df=train_labels_df,
-        tokenizer=tokenizer,
-        max_len=24,
-        argument_max_len=48,
-    )
-    print(train_dataset[2])
-    print("DONE")

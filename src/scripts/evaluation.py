@@ -55,12 +55,6 @@ def get_predictions(predictions_file, labels_df, arg_df):
     return merged_df
 
 
-"""
-this method chooses the best key point for each argument
-and generates a dataframe with the matches and scores
-"""
-
-
 def load_predictions(predictions_dir):
     arg = []
     kp = []
