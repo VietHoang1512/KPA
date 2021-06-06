@@ -30,9 +30,9 @@ class BertKPADataset(Dataset):
         self.df = df
         self.arg_df = arg_df.copy()
         self.labels_df = labels_df.copy()
-        self.topic = df["topic"].values
-        self.argument = df["argument"].values
-        self.key_point = df["key_point"].values
+        self.topic = df["topic"].tolist()
+        self.argument = df["argument"].tolist()
+        self.key_point = df["key_point"].tolist()
         self.label = df["label"].values
         self.stance = df["stance"].values
         self.tokenizer = tokenizer
