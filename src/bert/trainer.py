@@ -138,6 +138,7 @@ class Trainer:
                 (Optional) Local path to model if model to train has been instantiated from a local path
                 If present, we will try reloading the optimizer/scheduler states from there.
         """
+        torch.cuda.empty_cache()
         train_dataloader = self.get_train_dataloader()
 
         t_total = int(len(train_dataloader) // self.args.gradient_accumulation_steps * self.args.num_train_epochs)
@@ -200,9 +201,9 @@ class Trainer:
                 logger.info("  Starting training from scratch")
 
         model.zero_grad()
-        train_iterator = trange(epochs_trained, int(num_train_epochs), desc="Epoch")
+        train_iterator = trange(epochs_trained, total=int(num_train_epochs), desc="Epoch")
         for epoch, _ in enumerate(train_iterator):
-            epoch_iterator = tqdm(train_dataloader, desc="Training")
+            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), desc="Training")
             epoch_iterator.set_postfix(lr=optimizer.param_groups[0]["lr"])
             total_train_loss = AverageMeter()
 
@@ -227,6 +228,8 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), self.args.max_grad_norm)
                     optimizer.step()
                     scheduler.step()
+                    optimizer.zero_grad()
+                    scheduler.zero_grad()
                     model.zero_grad()
                     global_step += 1
             logs = dict()
@@ -295,7 +298,7 @@ class Trainer:
         val_dataloader = self.get_val_dataloader(val_dataset)
         val_df = val_dataloader.dataset.df.copy()
         predictions = []
-        epoch_iterator = tqdm(val_dataloader, desc="Evaluating")
+        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), desc="Evaluating")
         total_val_loss = AverageMeter()
         for inputs in epoch_iterator:
             val_loss, prob, n_val_samples = self._prediction_loop(model, inputs)

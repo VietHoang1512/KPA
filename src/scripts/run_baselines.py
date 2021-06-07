@@ -2,6 +2,7 @@ import logging
 import os
 from typing import List
 
+import torch
 from transformers import AutoTokenizer
 
 from src.bert.data_argument import DataArguments
@@ -60,6 +61,10 @@ if __name__ == "__main__":
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO,
     )
+
+    if torch.cuda.device_count() >= 1:
+        logger.info(f"Device {torch.cuda.get_device_name(0)} is availble")
+
     logger.warning("Device: %s", training_args.device)
     seed_everything(training_args.seed)
 
