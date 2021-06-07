@@ -80,7 +80,8 @@ if __name__ == "__main__":
 
     model = BertKPAModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
-    logger.info(f"Num param: {count_parameters(model)}")
+    logger.info(f"Number of parameters: {count_parameters(model)}")
+
     train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir=data_args.directory, subset="train")
     val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir=data_args.directory, subset="dev")
 

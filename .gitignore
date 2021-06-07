@@ -9,6 +9,7 @@ tmp/
 **/data
 *.csv
 kpm_data
+IBM_Debater
 
 # stuff
 # .flake8

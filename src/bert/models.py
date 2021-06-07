@@ -27,7 +27,8 @@ class BertKPAModel(nn.Module):
         self.n_hiddens = args.n_hiddens
         self.bert_drop = nn.Dropout(args.drop_rate)
 
-        self.layer_norm = nn.LayerNorm(self.config.hidden_size * self.n_hiddens)
+        # self.stance_norm = nn.LayerNorm(args.stance_dim)
+        # self.text_norm = nn.LayerNorm(self.config.hidden_size * self.n_hiddens)
         self.fc_text = nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, args.text_dim)
         self.fc_stance = nn.Linear(1, args.stance_dim)
 
@@ -38,7 +39,7 @@ class BertKPAModel(nn.Module):
         # )
         # self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
 
-        # self._init_weights(self.layer_norm)
+        # self._init_weights(self.text_norm)
         # self._init_weights(self.fc_text)
         # self._init_weights(self.fc_stance)
 
@@ -60,7 +61,7 @@ class BertKPAModel(nn.Module):
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
         output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
-        # output = self.layer_norm(output)
+        # output = self.text_norm(output)
         output = self.bert_drop(output)
         return output
 
@@ -79,6 +80,8 @@ class BertKPAModel(nn.Module):
         label,
     ):
         stance_rep = self.fc_stance(stance)
+        # stance_rep = self.stance_norm(stance_rep)
+
         topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
         key_point_bert_output = self._forward_text(
             key_point_input_ids, key_point_attention_mask, key_point_token_type_ids
