@@ -1,9 +1,12 @@
 import json
 import logging
 import os
+from typing import List, Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from sklearn.metrics import average_precision_score
 
 logger = logging.getLogger(__name__)
@@ -136,3 +139,20 @@ def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.Data
     df = pd.DataFrame(rows, columns=["arg_id", "keypoint_id", "argument", "key_point", "topic", "topic_id", "stance"])
     df["label"] = 0
     return df
+
+
+def length_plot(lengths: List[int], image_path: Optional[str] = "tmp.png") -> None:
+    """
+    Plot the sequence length statistic
+    Args:
+        lengths (List): Sequence lengths (by word or character)
+    Returns:
+        None
+    """
+    plt.figure(figsize=(15, 9))
+    textstr = f" Mean: {np.mean(lengths):.2f} \u00B1 {np.std(lengths):.2f}  Max: {np.max(lengths)}  Median: {np.median(lengths)}"
+    logger.info(image_path + textstr)
+    plt.annotate(textstr, xy=(0.1, 0.9), fontsize=14, xycoords="axes fraction")
+    sns.countplot(x=lengths, orient="h")
+    plt.savefig(image_path, bbox_inches="tight")
+    plt.close()
