@@ -201,10 +201,10 @@ class Trainer:
                 logger.info("  Starting training from scratch")
 
         model.zero_grad()
-        train_iterator = trange(epochs_trained, total=int(num_train_epochs), desc="Epoch")
+        train_iterator = trange(epochs_trained, int(num_train_epochs), desc="Epoch")
         for epoch, _ in enumerate(train_iterator):
             epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), desc="Training")
-            epoch_iterator.set_postfix(lr=optimizer.param_groups[0]["lr"])
+            epoch_iterator.set_postfix(LR=optimizer.param_groups[0]["lr"])
             total_train_loss = AverageMeter()
 
             for step, inputs in enumerate(epoch_iterator):
@@ -228,8 +228,8 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), self.args.max_grad_norm)
                     optimizer.step()
                     scheduler.step()
-                    optimizer.zero_grad()
-                    scheduler.zero_grad()
+                    # optimizer.zero_grad()
+                    # scheduler.zero_grad()
                     model.zero_grad()
                     global_step += 1
             logs = dict()
