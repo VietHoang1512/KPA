@@ -6,3 +6,5 @@ seaborn
 matplotlib
 transformers
 tensorboardX
+datasets
+accelerate

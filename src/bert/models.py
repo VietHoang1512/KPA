@@ -16,21 +16,26 @@ class BertKPAModel(nn.Module):
             args (ModelArguments): Bert Model Argument
         """
         super().__init__()
-
+        self.args = args
         self.config = AutoConfig.from_pretrained(
-            args.model_name,
+            self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name,
+            cache_dir=self.args.cache_dir if self.args.cache_dir else None,
             from_tf=False,
             output_hidden_states=True,
         )
-        self.args = args
-        self.bert_model = AutoModel.from_pretrained(args.model_name, config=self.config)
-        self.n_hiddens = args.n_hiddens
-        self.bert_drop = nn.Dropout(args.drop_rate)
+        self.bert_model = AutoModel.from_pretrained(
+            self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name, config=self.config
+        )
+
+        self.n_hiddens = self.args.n_hiddens
+        self.bert_drop = nn.Dropout(self.args.drop_rate)
 
         # self.stance_norm = nn.LayerNorm(args.stance_dim)
         # self.text_norm = nn.LayerNorm(self.config.hidden_size * self.n_hiddens)
-        self.fc_text = nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, args.text_dim)
-        self.fc_stance = nn.Linear(1, args.stance_dim)
+        self.fc_text = nn.Linear(
+            self.args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, self.args.text_dim
+        )
+        self.fc_stance = nn.Linear(1, self.args.stance_dim)
 
         # self.fc_text = nn.Sequential(
         #     nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, 128),

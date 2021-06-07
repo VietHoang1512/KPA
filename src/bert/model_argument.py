@@ -18,6 +18,10 @@ class ModelArguments:
         default=None,
         metadata={"help": "If training from scratch, pass a model type from https://huggingface.co/models "},
     )
+    cache_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Where do you want to store the pre-trained models downloaded from s3"},
+    )
     tokenizer: Optional[str] = field(
         default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
     )
