@@ -14,6 +14,8 @@ from src.utils.data import get_data, length_plot, prepare_inference_data
 from src.utils.hf_argparser import HfArgumentParser
 from src.utils.train_utils import count_parameters, seed_everything
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,9 +64,9 @@ if __name__ == "__main__":
     seed_everything(training_args.seed)
 
     if model_args.tokenizer:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer, use_fast=False)
     elif model_args.model_name:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name, use_fast=False)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported, but you can do it from another script, save it,"
