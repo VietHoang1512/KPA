@@ -17,28 +17,50 @@ class BertKPAModel(nn.Module):
         """
         super().__init__()
 
-        config = AutoConfig.from_pretrained(
+        self.config = AutoConfig.from_pretrained(
             args.model_name,
             from_tf=False,
             output_hidden_states=True,
         )
         self.args = args
-        self.bert_model = AutoModel.from_pretrained(args.model_name, config=config)
+        self.bert_model = AutoModel.from_pretrained(args.model_name, config=self.config)
         self.n_hiddens = args.n_hiddens
         self.bert_drop = nn.Dropout(args.drop_rate)
 
-        self.fc_text = nn.Sequential(
-            nn.Linear(args.stance_dim + 2 * config.hidden_size * self.n_hiddens, 128),
-            nn.ReLU(inplace=True),
-            nn.Linear(128, args.text_dim),
-        )
-        self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
+        self.layer_norm = nn.LayerNorm(self.config.hidden_size * self.n_hiddens)
+        self.fc_text = nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, args.text_dim)
+        self.fc_stance = nn.Linear(1, args.stance_dim)
+
+        # self.fc_text = nn.Sequential(
+        #     nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, 128),
+        #     nn.ReLU(inplace=True),
+        #     nn.Linear(128, args.text_dim),
+        # )
+        # self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
+
+        # self._init_weights(self.layer_norm)
+        # self._init_weights(self.fc_text)
+        # self._init_weights(self.fc_stance)
 
         self.criterion = ContrastiveLoss(margin=args.margin)
+
+    def _init_weights(self, module: nn.Module):
+        if isinstance(module, nn.Linear):
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+        elif isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
 
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
         output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
+        # output = self.layer_norm(output)
         output = self.bert_drop(output)
         return output
 

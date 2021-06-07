@@ -1,5 +1,5 @@
 #!bin/bash
-export PYTHONPATH=/content/KPA
+export PYTHONPATH=$PWD
 python src/scripts/run_baselines.py \
         --output_dir "outputs" \
         --model_name "roberta-base" \
@@ -16,9 +16,9 @@ python src/scripts/run_baselines.py \
         --gradient_accumulation_steps 1 \
         --learning_rate 0.00003 \
         --margin 1.0 \
-        --drop_rate 0.1 \
+        --drop_rate 0.0 \
         --n_hiddens 4 \
-        --max_len 24 \
+        --max_len 24\
         --argument_max_len 48 \
         --stance_dim 32 \
         --text_dim 256 \
