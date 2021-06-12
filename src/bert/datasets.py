@@ -8,7 +8,7 @@ from transformers import PreTrainedTokenizer
 from src.bert.data_argument import DataArguments
 
 
-class BertKPADataset(Dataset):
+class BertSiameseDataset(Dataset):
     def __init__(
         self,
         df: pd.DataFrame,
