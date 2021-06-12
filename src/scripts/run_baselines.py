@@ -6,9 +6,9 @@ import torch
 from transformers import AutoTokenizer
 
 from src.bert.data_argument import DataArguments
-from src.bert.datasets import BertKPADataset
+from src.bert.datasets import BertSiameseDataset
 from src.bert.model_argument import ModelArguments
-from src.bert.models import BertKPAModel
+from src.bert.models import BertSiameseModel
 from src.bert.trainer import Trainer
 from src.bert.training_argument import TrainingArguments
 from src.utils.data import get_data, length_plot, prepare_inference_data
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer"
         )
 
-    model = BertKPAModel(args=model_args)
+    model = BertSiameseModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
     logger.info(f"Number of parameters: {count_parameters(model)}")
 
@@ -131,28 +131,28 @@ if __name__ == "__main__":
     train_df.to_csv("train.csv", index=False)
     val_df.to_csv("val.csv", index=False)
 
-    train_dataset = BertKPADataset(
+    train_dataset = BertSiameseDataset(
         df=train_df,
         arg_df=train_arg_df,
         labels_df=train_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_dataset = BertKPADataset(
+    val_dataset = BertSiameseDataset(
         df=val_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    train_inf_dataset = BertKPADataset(
+    train_inf_dataset = BertSiameseDataset(
         df=train_inf_df,
         arg_df=train_arg_df,
         labels_df=train_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_inf_dataset = BertKPADataset(
+    val_inf_dataset = BertSiameseDataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,

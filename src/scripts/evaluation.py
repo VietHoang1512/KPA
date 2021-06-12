@@ -10,6 +10,8 @@ from sklearn.metrics import average_precision_score
 def get_ap(df, label_column, top_percentile=0.5):
     top = int(len(df) * top_percentile)
     df = df.sort_values("score", ascending=False).head(top)
+    # after selecting top percentile candidates, we set the score for the dummy kp to 1, to prevent it from increasing the precision.
+    df.loc[df["key_point_id"] == "dummy_id", "score"] = 0.99
     return average_precision_score(y_true=df[label_column], y_score=df["score"])
 
 
@@ -66,6 +68,7 @@ def load_predictions(predictions_dir):
             arg.append(arg_id)
             kp.append(best_kp[0])
             scores.append(best_kp[1])
+        print(f"loaded predictions for {len(arg)} arguments")
         return pd.DataFrame({"arg_id": arg, "key_point_id": kp, "score": scores})
 
 

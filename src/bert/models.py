@@ -7,7 +7,7 @@ from src.bert.losses import ContrastiveLoss
 from src.bert.model_argument import ModelArguments
 
 
-class BertKPAModel(nn.Module):
+class BertSiameseModel(nn.Module):
     def __init__(self, args: ModelArguments):
         """
         Simple Bert Siamese Model.
@@ -38,11 +38,11 @@ class BertKPAModel(nn.Module):
         self.fc_stance = nn.Linear(1, self.args.stance_dim)
 
         # self.fc_text = nn.Sequential(
-        #     nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, 128),
+        #     nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, args.text_dim),
         #     nn.ReLU(inplace=True),
-        #     nn.Linear(128, args.text_dim),
+        #     nn.Linear(args.text_dim, args.text_dim),
         # )
-        # self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
+        # self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True), nn.Linear(args.stance_dim, args.stance_dim))
 
         # self._init_weights(self.text_norm)
         # self._init_weights(self.fc_text)
