@@ -31,4 +31,8 @@ class ModelArguments:
     stance_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding stance."})
     text_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding text."})
     drop_rate: float = field(default=0.1, metadata={"help": "Model dropout rate."})
+    loss_fct: str = field(default="constrastive", metadata={"help": "Loss function used for training siamese network."})
+    distance: str = field(
+        default="euclide", metadata={"help": "Function that returns a distance between two emeddings."}
+    )
     margin: float = field(default=1.0, metadata={"help": "Margin distance value."})

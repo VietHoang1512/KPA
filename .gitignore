@@ -10,7 +10,7 @@ tmp/
 *.csv
 kpm_data
 IBM_Debater
-
+quora
 # stuff
 # .flake8
 # .isort.cfg
