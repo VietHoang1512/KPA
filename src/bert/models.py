@@ -61,7 +61,7 @@ class BertSiameseModel(nn.Module):
             self.distance_metric = SiameseDistanceMetric.EUCLIDEAN
         elif self.args.distance == "manhatan":
             self.distance_metric = SiameseDistanceMetric.MANHATTAN
-        elif self.distance_metric == "cosine":
+        elif self.args.distance == "cosine":
             self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
         else:
             raise NotImplementedError(
@@ -138,7 +138,7 @@ class BertSiameseModel(nn.Module):
 
         loss = self.criterion(output1=argument_rep, output2=keypoint_rep, target=label)
 
-        similarity = self.args.margin - self.distance_metric(argument_rep, keypoint_rep) / self.args.margin
+        similarity = (self.args.margin - self.distance_metric(argument_rep, keypoint_rep)) / self.args.margin
         return loss, similarity
 
 
