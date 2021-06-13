@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from typing import Dict, Optional, Tuple
 
@@ -10,11 +9,11 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm, trange
 from transformers import AdamW, get_linear_schedule_with_warmup
 
+from src.bert.training_argument import TrainingArguments
 from src.utils import constants
 from src.utils.data import evaluate_predictions
+from src.utils.logging import custom_logger
 from src.utils.train_utils import AverageMeter, EarlyStopping
-
-from .training_argument import TrainingArguments
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -33,7 +32,7 @@ def is_tensorboard_available():
     return _has_tensorboard
 
 
-logger = logging.getLogger(__name__)
+logger = custom_logger(__name__)
 
 
 class Trainer:
@@ -204,7 +203,7 @@ class Trainer:
         train_iterator = trange(epochs_trained, int(num_train_epochs), desc="Epoch")
         train_iterator.set_postfix(LR=optimizer.param_groups[0]["lr"])
         for epoch, _ in enumerate(train_iterator):
-            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=0, desc="Training")
+            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=1, desc="Training")
             total_train_loss = AverageMeter()
 
             for step, inputs in enumerate(epoch_iterator):
@@ -228,7 +227,7 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), self.args.max_grad_norm)
                     optimizer.step()
                     scheduler.step()
-                    optimizer.zero_grad()
+                    # optimizer.zero_grad()
                     # scheduler.zero_grad()
                     model.zero_grad()
                     global_step += 1
@@ -304,7 +303,7 @@ class Trainer:
         val_dataloader = self.get_val_dataloader(val_dataset)
         val_df = val_dataloader.dataset.df.copy()
         predictions = []
-        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=0, desc="Evaluating")
+        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=1, desc="Evaluating")
         total_val_loss = AverageMeter()
         for inputs in epoch_iterator:
             val_loss, prob, n_val_samples = self._prediction_loop(model, inputs)

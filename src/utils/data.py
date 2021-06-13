@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from typing import List, Optional
 
@@ -9,7 +8,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn.metrics import average_precision_score
 
-logger = logging.getLogger(__name__)
+from src.utils.logging import custom_logger
+
+logger = custom_logger(__name__)
 
 
 def get_ap(df: pd.DataFrame, label_column: str, top_percentile: float = 0.5):

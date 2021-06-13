@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import List
 
@@ -13,11 +12,12 @@ from src.bert.trainer import Trainer
 from src.bert.training_argument import TrainingArguments
 from src.utils.data import get_data, length_plot, prepare_inference_data
 from src.utils.hf_argparser import HfArgumentParser
+from src.utils.logging import custom_logger
 from src.utils.train_utils import count_parameters, seed_everything
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-logger = logging.getLogger(__name__)
+logger = custom_logger(__name__)
 
 
 def word_len(texts: List[str]) -> List:
@@ -55,12 +55,6 @@ if __name__ == "__main__":
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
         )
-
-    logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
-        level=logging.INFO,
-    )
 
     if torch.cuda.device_count() >= 1:
         logger.info(f"Device {torch.cuda.get_device_name(0)} is availble")
