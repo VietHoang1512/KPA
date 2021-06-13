@@ -3,15 +3,15 @@ python src/scripts/run_baselines.py \
         --output_dir "outputs" \
         --model_name_or_path "roberta-base" \
         --tokenizer "roberta-base" \
-        --loss_fct "constrastive" \
-        --distance "cosine" \
+        --loss_fct "online-constrastive" \
+        --distance "manhattan" \
         --directory "kpm_data" \
         --logging_dir "runs" \
         --overwrite_output_dir \
         --num_train_epochs 15 \
         --early_stop 5 \
-        --train_batch_size 16 \
-        --val_batch_size 16 \
+        --train_batch_size 32 \
+        --val_batch_size 32 \
         --do_train \
         --evaluate_during_training \
         --warmup_steps 0 \

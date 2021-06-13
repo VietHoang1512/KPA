@@ -1,11 +1,12 @@
-import logging
 import os
 import random
 
 import numpy as np
 import torch
 
-logger = logging.getLogger(__name__)
+from src.utils.logging import custom_logger
+
+logger = custom_logger(__name__)
 
 
 def seed_everything(seed: int) -> None:

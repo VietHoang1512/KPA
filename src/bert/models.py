@@ -1,5 +1,3 @@
-import logging
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,8 +10,9 @@ from src.bert.losses import (
     OnlineContrastiveLoss,
 )
 from src.bert.model_argument import ModelArguments
+from src.utils.logging import custom_logger
 
-logger = logging.getLogger(__name__)
+logger = custom_logger(__name__)
 
 
 class BertSiameseModel(nn.Module):
@@ -41,6 +40,10 @@ class BertSiameseModel(nn.Module):
 
         # self.stance_norm = nn.LayerNorm(args.stance_dim)
         # self.text_norm = nn.LayerNorm(self.config.hidden_size * self.n_hiddens)
+
+        # FIXME
+        # self.fc_text = AttentionHead(self.args.stance_dim + 2 * self.config.hidden_size
+        #                              * self.n_hiddens, self.args.text_dim, self.args.text_dim)
         self.fc_text = nn.Linear(
             self.args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, self.args.text_dim
         )
@@ -204,3 +207,26 @@ class BertKPAClassificationModel(nn.Module):
 
         loss = self.criterion(prob, label)
         return loss, prob
+
+
+class AttentionHead(nn.Module):
+    def __init__(self, in_features, hidden_dim, num_targets):
+        super().__init__()
+        self.in_features = in_features
+        self.middle_features = hidden_dim
+
+        self.W = nn.Linear(in_features, hidden_dim)
+        self.V = nn.Linear(hidden_dim, 1)
+        self.out_features = hidden_dim
+
+    def forward(self, features):
+        att = torch.tanh(self.W(features))
+
+        score = self.V(att)
+
+        attention_weights = torch.softmax(score, dim=1)
+
+        context_vector = attention_weights * features
+        context_vector = torch.sum(context_vector, dim=1)
+
+        return context_vector
