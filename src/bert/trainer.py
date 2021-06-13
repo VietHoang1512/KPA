@@ -202,9 +202,9 @@ class Trainer:
 
         model.zero_grad()
         train_iterator = trange(epochs_trained, int(num_train_epochs), desc="Epoch")
+        train_iterator.set_postfix(LR=optimizer.param_groups[0]["lr"])
         for epoch, _ in enumerate(train_iterator):
             epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), desc="Training")
-            epoch_iterator.set_postfix(LR=optimizer.param_groups[0]["lr"])
             total_train_loss = AverageMeter()
 
             for step, inputs in enumerate(epoch_iterator):
@@ -246,6 +246,7 @@ class Trainer:
                 output_dir = os.path.join(self.args.output_dir, "best_model")
                 os.makedirs(output_dir, exist_ok=True)
                 self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
+
                 if self.es.is_best:
                     self._save_prediction(prediction=prediction, output_dir=output_dir)
 
@@ -261,6 +262,11 @@ class Trainer:
             if self.tb_writer:
                 for k, v in logs.items():
                     self.tb_writer.add_scalar(k, v, epoch)
+
+            if self.es.early_stop:
+                logger.warning("Early stopping")
+                break
+
         if self.args.do_inference:
             # TODO: inference
             pass

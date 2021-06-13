@@ -1,10 +1,19 @@
+import logging
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 
-from src.bert.losses import ContrastiveLoss
+from src.bert.distance import SiameseDistanceMetric
+from src.bert.losses import (
+    ContrastiveLoss,
+    CosineSimilarityLoss,
+    OnlineContrastiveLoss,
+)
 from src.bert.model_argument import ModelArguments
+
+logger = logging.getLogger(__name__)
 
 
 class BertSiameseModel(nn.Module):
@@ -48,7 +57,33 @@ class BertSiameseModel(nn.Module):
         # self._init_weights(self.fc_text)
         # self._init_weights(self.fc_stance)
 
-        self.criterion = ContrastiveLoss(margin=args.margin)
+        if self.args.distance == "euclid":
+            self.distance_metric = SiameseDistanceMetric.EUCLIDEAN
+        elif self.args.distance == "manhatan":
+            self.distance_metric = SiameseDistanceMetric.MANHATTAN
+        elif self.distance_metric == "cosine":
+            self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
+        else:
+            raise NotImplementedError(
+                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `euclid`, `manhatan` or `consine`"
+            )
+
+        if self.args.loss_fct == "constrastive":
+            self.criterion = ContrastiveLoss(distance_metric=self.distance_metric, margin=args.margin)
+        elif self.args.loss_fct == "online-constrastive":
+            self.criterion = OnlineContrastiveLoss(distance_metric=self.distance_metric, margin=args.margin)
+        elif self.args.loss_fct == "consine":
+            # FIXME
+            logger.warning(f"Provided {self.distance_metric} would be ignored if using cosine similarity loss")
+            self.criterion = CosineSimilarityLoss()
+
+        else:
+            raise NotImplementedError(
+                f"Loss function {self.args.loss_fct} is not implemented yet. Must be `constrastive` or `consine`"
+            )
+
+        logger.warning(f"Using {self.args.distance} distance function")
+        logger.warning(f"Using {self.args.loss_fct} loss function")
 
     def _init_weights(self, module: nn.Module):
         if isinstance(module, nn.Linear):
@@ -101,9 +136,9 @@ class BertSiameseModel(nn.Module):
         argument_rep = F.normalize(argument_rep, p=2, dim=1)
         keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
 
-        loss = self.criterion(argument_rep, keypoint_rep, label)
+        loss = self.criterion(output1=argument_rep, output2=keypoint_rep, target=label)
 
-        similarity = F.relu(self.args.margin - (argument_rep - keypoint_rep).pow(2).sum(1)) / self.args.margin
+        similarity = self.args.margin - self.distance_metric(argument_rep, keypoint_rep) / self.args.margin
         return loss, similarity
 
 
