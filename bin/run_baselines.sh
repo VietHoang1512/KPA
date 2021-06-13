@@ -3,8 +3,8 @@ python src/scripts/run_baselines.py \
         --output_dir "outputs" \
         --model_name_or_path "roberta-base" \
         --tokenizer "roberta-base" \
-        --loss_fct "online-constrastive" \
-        --distance "euclid" \
+        --loss_fct "constrastive" \
+        --distance "cosine" \
         --directory "kpm_data" \
         --logging_dir "runs" \
         --overwrite_output_dir \
