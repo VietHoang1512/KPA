@@ -57,15 +57,15 @@ class BertSiameseModel(nn.Module):
         # self._init_weights(self.fc_text)
         # self._init_weights(self.fc_stance)
 
-        if self.args.distance == "euclid":
+        if self.args.distance == "euclidean":
             self.distance_metric = SiameseDistanceMetric.EUCLIDEAN
-        elif self.args.distance == "manhatan":
+        elif self.args.distance == "manhattan":
             self.distance_metric = SiameseDistanceMetric.MANHATTAN
         elif self.args.distance == "cosine":
             self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
         else:
             raise NotImplementedError(
-                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `euclid`, `manhatan` or `consine`"
+                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `euclidean`, `manhattan` or `consine`"
             )
 
         if self.args.loss_fct == "constrastive":
