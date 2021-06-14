@@ -24,5 +24,5 @@ python src/scripts/train_qa.py \
         --max_statement_length 48 \
         --stance_dim 32 \
         --text_dim 256 \
-        --num_workers 2 \
+        --num_workers 8 \
         --seed 0
