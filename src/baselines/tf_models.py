@@ -6,7 +6,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 from transformers import AutoConfig, TFAutoModel
 
-from src.bert.model_argument import ModelArguments
+from src.baselines.model_argument import ModelArguments
 
 
 def contrastive_loss(y, preds, margin=1):

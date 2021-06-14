@@ -142,9 +142,9 @@ class HfArgumentParser(ArgumentParser):
 
 
 if __name__ == "__main__":
-    from src.bert.data_argument import DataArguments
-    from src.bert.model_argument import ModelArguments
-    from src.bert.training_argument import TrainingArguments
+    from src.baselines.data_argument import DataArguments
+    from src.baselines.model_argument import ModelArguments
+    from src.train_utils.training_argument import TrainingArguments
 
     parser = HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
