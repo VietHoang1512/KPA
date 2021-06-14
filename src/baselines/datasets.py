@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
-from src.bert.data_argument import DataArguments
+from src.baselines.data_argument import DataArguments
 
 
 class BertSiameseDataset(Dataset):

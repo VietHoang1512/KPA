@@ -4,10 +4,10 @@ from typing import List
 import torch
 from transformers import AutoTokenizer
 
-from src.baselines.data_argument import DataArguments
-from src.baselines.datasets import BertSiameseDataset
-from src.baselines.model_argument import ModelArguments
-from src.baselines.models import BertSiameseModel
+from src.question_answering.data_argument import DataArguments
+from src.question_answering.datasets import BertQADataset
+from src.question_answering.model_argument import ModelArguments
+from src.question_answering.models import BertQAModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
 from src.train_utils.training_argument import TrainingArguments
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer"
         )
 
-    model = BertSiameseModel(args=model_args)
+    model = BertQAModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
     logger.info(f"Number of parameters: {count_parameters(model)}")
 
@@ -128,28 +128,28 @@ if __name__ == "__main__":
     train_df.to_csv("train.csv", index=False)
     val_df.to_csv("val.csv", index=False)
 
-    train_dataset = BertSiameseDataset(
+    train_dataset = BertQADataset(
         df=train_df,
         arg_df=train_arg_df,
         labels_df=train_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_dataset = BertSiameseDataset(
+    val_dataset = BertQADataset(
         df=val_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    train_inf_dataset = BertSiameseDataset(
+    train_inf_dataset = BertQADataset(
         df=train_inf_df,
         arg_df=train_arg_df,
         labels_df=train_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_inf_dataset = BertSiameseDataset(
+    val_inf_dataset = BertQADataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
