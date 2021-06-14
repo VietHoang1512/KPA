@@ -159,7 +159,7 @@ class BertSiameseModel(nn.Module):
 
         loss = self.criterion(output1=argument_rep, output2=keypoint_rep, target=label)
 
-        similarity = (self.args.margin - self.distance_metric(argument_rep, keypoint_rep)) / self.args.margin
+        similarity = F.relu(self.args.margin - self.distance_metric(argument_rep, keypoint_rep)) / self.args.margin
         return loss, similarity
 
 

@@ -2,9 +2,11 @@ import json
 import os
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+from sklearn.metrics import accuracy_score, roc_auc_score
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm, trange
 from transformers import AdamW, get_linear_schedule_with_warmup
@@ -203,7 +205,7 @@ class Trainer:
         train_iterator = trange(epochs_trained, int(num_train_epochs), position=0, desc="Epoch")
         train_iterator.set_postfix(LR=optimizer.param_groups[0]["lr"])
         for epoch, _ in enumerate(train_iterator):
-            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=0, desc="Training")
+            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=1, desc="Training")
             total_train_loss = AverageMeter()
             for step, inputs in enumerate(epoch_iterator):
 
@@ -233,7 +235,7 @@ class Trainer:
             logs = dict()
 
             if self.args.evaluate_during_training:
-                logs["VAL_LOSS"] = self.evaluate(model, display_loss=True)
+                logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
                 (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
                     model, val_dataset=self.val_inf_dataset
                 )
@@ -301,21 +303,30 @@ class Trainer:
 
         val_dataloader = self.get_val_dataloader(val_dataset)
         val_df = val_dataloader.dataset.df.copy()
+        labels = []
         predictions = []
-        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=0, desc="Evaluating")
+        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=1, desc="Evaluating")
         total_val_loss = AverageMeter()
         for inputs in epoch_iterator:
-            val_loss, prob, n_val_samples = self._prediction_loop(model, inputs)
+            val_loss, prob, label = self._prediction_loop(model, inputs)
+            n_val_samples = len(label)
             total_val_loss.update(val_loss, n_val_samples)
             predictions.extend(prob)
+            labels.extend(label)
+
             if display_loss:
                 epoch_iterator.set_postfix(VAL_LOSS=total_val_loss.avg)
-
+        labels = np.array(labels)
+        predictions = np.array(predictions)
         val_df["label"] = predictions
         if not display_loss:
             return self.calculate_metric(val_df, val_dataloader.dataset.labels_df, val_dataloader.dataset.arg_df)
         else:
-            return total_val_loss.avg
+            auc = roc_auc_score(labels, predictions)
+            predictions = (predictions > 0.5).astype(np.int)
+            acc = accuracy_score(labels, predictions)
+            epoch_iterator.set_postfix(VAL_AUC=auc, VAL_ACC=acc)
+            return total_val_loss.avg, auc, acc
 
     @classmethod
     def calculate_metric(self, val_df: pd.DataFrame, labels_df: pd.DataFrame, arg_df: pd.DataFrame):
@@ -361,6 +372,7 @@ class Trainer:
 
         model.eval()
         with torch.no_grad():
+            label = inputs["label"].cpu().detach().numpy().tolist()
             for k, v in inputs.items():
                 inputs[k] = v.to(self.args.device)
 
@@ -380,4 +392,4 @@ class Trainer:
         if self.args.gradient_accumulation_steps > 1:
             loss = loss / self.args.gradient_accumulation_steps
 
-        return loss.item(), prob, inputs[k].size(0)
+        return loss.item(), prob, label
