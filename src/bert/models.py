@@ -30,6 +30,7 @@ class BertSiameseModel(nn.Module):
             cache_dir=self.args.cache_dir if self.args.cache_dir else None,
             from_tf=False,
             output_hidden_states=True,
+            return_dict=True,
         )
         self.bert_model = AutoModel.from_pretrained(
             self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name, config=self.config
@@ -45,7 +46,7 @@ class BertSiameseModel(nn.Module):
         # self.fc_text = AttentionHead(self.args.stance_dim + 2 * self.config.hidden_size
         #                              * self.n_hiddens, self.args.text_dim, self.args.text_dim)
         self.fc_text = nn.Linear(
-            self.args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, self.args.text_dim
+            self.args.stance_dim + 2 * self.config.hidden_size * max(self.n_hiddens, 1), self.args.text_dim
         )
         self.fc_stance = nn.Linear(1, self.args.stance_dim)
 
@@ -102,24 +103,25 @@ class BertSiameseModel(nn.Module):
             module.weight.data.fill_(1.0)
 
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
-        if self.model_type in ["distilbert", "electra"]:
+        if self.model_type in ["distilbert", "electra", "bart", "xlm", "xlnet", "camembert", "longformer"]:
             output = self.bert_model(input_ids, attention_mask=attention_mask)
-            output = torch.cat([output[1][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
-        elif self.model_type in ["xlm", "xlnet", "camembert", "longformer"]:
-            output = self.bert_model(input_ids, attention_mask=attention_mask)
-            # FIXME: XLnet behaves differenctly between train-eval
-            if self.training:
-                output = torch.cat([output[1][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
-            else:
-                output = torch.cat(
-                    [torch.transpose(output[1][-i], 0, 1)[:, 0, :] for i in range(self.n_hiddens)], axis=-1
-                )
-        elif self.model_type in ["bart"]:
-            output = self.bert_model(input_ids, attention_mask=attention_mask)
-            output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
         else:
             output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-            output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
+        if self.n_hiddens > 0:
+            hidden_states_key = "hidden_states"
+            if self.model_type == "bart":
+                hidden_states_key = "decoder_hidden_states"
+
+            if self.model_type == "xlnet" and (not self.training):
+                # FIXME: XLnet behaves differenctly between train-eval
+                output = torch.cat(
+                    [torch.transpose(output[hidden_states_key][-i], 0, 1)[:, 0, :] for i in range(self.n_hiddens)],
+                    axis=-1,
+                )
+            else:
+                output = torch.cat([output[hidden_states_key][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
+        else:
+            output = output["last_hidden_state"][:, 0, :]
         # output = self.text_norm(output)
         output = self.bert_drop(output)
         return output

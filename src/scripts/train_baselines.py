@@ -13,6 +13,7 @@ from src.bert.training_argument import TrainingArguments
 from src.utils.data import get_data, prepare_inference_data
 from src.utils.hf_argparser import HfArgumentParser
 from src.utils.logging import custom_logger
+from src.utils.signature import print_signature
 from src.utils.train_utils import count_parameters, seed_everything
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -42,6 +43,8 @@ def token_len(texts: List[str], tokenizer: AutoTokenizer) -> List:
 
 
 if __name__ == "__main__":
+
+    print_signature()
 
     parser = HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
