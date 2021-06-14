@@ -34,7 +34,7 @@ class BertSiameseModel(nn.Module):
         self.bert_model = AutoModel.from_pretrained(
             self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name, config=self.config
         )
-
+        self.model_type = type(self.bert_model).__name__.replace("Model", "").lower()
         self.n_hiddens = self.args.n_hiddens
         self.bert_drop = nn.Dropout(self.args.drop_rate)
 
@@ -102,8 +102,22 @@ class BertSiameseModel(nn.Module):
             module.weight.data.fill_(1.0)
 
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
-        output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
+        if self.model_type in ["distilbert"]:
+            output = self.bert_model(input_ids, attention_mask=attention_mask)
+            output = torch.cat([output[1][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
+        elif self.model_type in ["xlm", "xlnet", "camembert", "bart", "longformer"]:
+            output = self.bert_model(input_ids, attention_mask=attention_mask)
+            # FIXME: XLnet behavior differenct between train-eval
+            if self.training:
+                output = torch.cat([output[1][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
+            else:
+                output = torch.cat(
+                    [torch.transpose(output[1][-i], 0, 1)[:, 0, :] for i in range(self.n_hiddens)], axis=-1
+                )
+
+        else:
+            output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+            output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
         # output = self.text_norm(output)
         output = self.bert_drop(output)
         return output

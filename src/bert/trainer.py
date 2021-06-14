@@ -200,12 +200,12 @@ class Trainer:
                 logger.info("  Starting training from scratch")
 
         model.zero_grad()
-        train_iterator = trange(epochs_trained, int(num_train_epochs), desc="Epoch")
+        train_iterator = trange(epochs_trained, int(num_train_epochs), position=0, desc="Epoch")
         train_iterator.set_postfix(LR=optimizer.param_groups[0]["lr"])
         for epoch, _ in enumerate(train_iterator):
             epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=1, desc="Training")
             total_train_loss = AverageMeter()
-
+            self.evaluate(model, display_loss=True)
             for step, inputs in enumerate(epoch_iterator):
 
                 # Skip past any already trained steps if resuming training
