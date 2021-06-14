@@ -3,13 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 
-from src.bert.distance import SiameseDistanceMetric
-from src.bert.losses import (
+from src.bert.model_argument import ModelArguments
+from src.train_utils.distance import SiameseDistanceMetric
+from src.train_utils.losses import (
     ContrastiveLoss,
     CosineSimilarityLoss,
     OnlineContrastiveLoss,
 )
-from src.bert.model_argument import ModelArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
@@ -102,19 +102,21 @@ class BertSiameseModel(nn.Module):
             module.weight.data.fill_(1.0)
 
     def _forward_text(self, input_ids, attention_mask, token_type_ids):
-        if self.model_type in ["distilbert"]:
+        if self.model_type in ["distilbert", "electra"]:
             output = self.bert_model(input_ids, attention_mask=attention_mask)
             output = torch.cat([output[1][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
-        elif self.model_type in ["xlm", "xlnet", "camembert", "bart", "longformer"]:
+        elif self.model_type in ["xlm", "xlnet", "camembert", "longformer"]:
             output = self.bert_model(input_ids, attention_mask=attention_mask)
-            # FIXME: XLnet behavior differenct between train-eval
+            # FIXME: XLnet behaves differenctly between train-eval
             if self.training:
                 output = torch.cat([output[1][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
             else:
                 output = torch.cat(
                     [torch.transpose(output[1][-i], 0, 1)[:, 0, :] for i in range(self.n_hiddens)], axis=-1
                 )
-
+        elif self.model_type in ["bart"]:
+            output = self.bert_model(input_ids, attention_mask=attention_mask)
+            output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
         else:
             output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
             output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)

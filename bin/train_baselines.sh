@@ -1,8 +1,8 @@
 export PYTHONPATH=$PWD
-python src/scripts/run_baselines.py \
+python src/scripts/train_baselines.py \
         --output_dir "outputs" \
-        --model_name_or_path "xlnet-base-cased" \
-        --tokenizer "xlnet-base-cased" \
+        --model_name_or_path "facebook/bart-base" \
+        --tokenizer "facebook/bart-base" \
         --loss_fct "online-constrastive" \
         --distance "euclidean" \
         --directory "kpm_data" \
@@ -10,8 +10,8 @@ python src/scripts/run_baselines.py \
         --overwrite_output_dir \
         --num_train_epochs 15 \
         --early_stop 5 \
-        --train_batch_size 30 \
-        --val_batch_size 30 \
+        --train_batch_size 32 \
+        --val_batch_size 32 \
         --do_train \
         --evaluate_during_training \
         --warmup_steps 0 \
