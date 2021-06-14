@@ -26,7 +26,10 @@ class ModelArguments:
         default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
     )
     n_hiddens: int = field(
-        default=4, metadata={"help": "Concatenate n_hiddens final layer of [CLS] token's representation."}
+        default=4,
+        metadata={
+            "help": "Concatenate n_hiddens final layer of [CLS] token's representation. Use last hidden state if n_hiddens <=0"
+        },
     )
     stance_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding stance."})
     text_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding text."})

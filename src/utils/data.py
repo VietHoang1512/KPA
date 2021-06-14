@@ -79,10 +79,12 @@ def load_predictions(predictions_dir: str) -> pd.DataFrame:
     return pd.DataFrame({"arg_id": arg, "key_point_id": kp, "score": scores})
 
 
+def extract_topic(text: str) -> int:
+    topic_id = text.split("_")[1]
+    return int(topic_id)
+
+
 def get_data(gold_data_dir: str, subset: str) -> pd.DataFrame:
-    def extract_topic(text: str) -> int:
-        topic_id = text.split("_")[1]
-        return int(topic_id)
 
     logger.info(f"Getting {subset} from {gold_data_dir}")
     arg_df, kp_df, labels_df = load_kpm_data(gold_data_dir, subset)

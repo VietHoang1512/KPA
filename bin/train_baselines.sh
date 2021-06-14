@@ -1,8 +1,8 @@
 export PYTHONPATH=$PWD
 python src/scripts/train_baselines.py \
         --output_dir "outputs" \
-        --model_name_or_path "facebook/bart-base" \
-        --tokenizer "facebook/bart-base" \
+        --model_name_or_path "YituTech/conv-bert-base" \
+        --tokenizer "YituTech/conv-bert-base" \
         --loss_fct "online-constrastive" \
         --distance "euclidean" \
         --directory "kpm_data" \
@@ -19,7 +19,7 @@ python src/scripts/train_baselines.py \
         --learning_rate 0.00003 \
         --margin 0.5 \
         --drop_rate 0.1 \
-        --n_hiddens 4 \
+        --n_hiddens -1 \
         --max_len 36 \
         --argument_max_len 64 \
         --stance_dim 32 \
