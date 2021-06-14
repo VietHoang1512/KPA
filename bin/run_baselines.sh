@@ -1,17 +1,17 @@
 export PYTHONPATH=$PWD
 python src/scripts/run_baselines.py \
         --output_dir "outputs" \
-        --model_name_or_path "roberta-base" \
-        --tokenizer "roberta-base" \
+        --model_name_or_path "xlnet-base-cased" \
+        --tokenizer "xlnet-base-cased" \
         --loss_fct "online-constrastive" \
-        --distance "manhattan" \
+        --distance "euclidean" \
         --directory "kpm_data" \
         --logging_dir "runs" \
         --overwrite_output_dir \
         --num_train_epochs 15 \
         --early_stop 5 \
-        --train_batch_size 32 \
-        --val_batch_size 32 \
+        --train_batch_size 30 \
+        --val_batch_size 30 \
         --do_train \
         --evaluate_during_training \
         --warmup_steps 0 \
