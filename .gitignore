@@ -11,6 +11,8 @@ tmp/
 kpm_data
 IBM_Debater
 quora
+kpm_6_folds
+
 # stuff
 # .flake8
 # .isort.cfg

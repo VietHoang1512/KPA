@@ -1,6 +1,5 @@
 #!bin/bash
 
-git clone https://github.com/IBM/KPA_2021_shared_task.git
-mv  KPA_2021_shared_task/kpm_data/ .
-ls kpm_data/
-rm -rf KPA_2021_shared_task
+pip install -r requirements.txt
+
+[[ -d kpm_6_folds ]] || ((gdown --id 1eDjsAyAgAqOKiYEOIRkMZ87B_J7xycTj) && (unzip "kpm_6_folds.zip") && rm "kpm_6_folds.zip")
