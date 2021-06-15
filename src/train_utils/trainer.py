@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import accuracy_score, roc_auc_score
 from torch.utils.data import DataLoader, Dataset
-from tqdm.auto import tqdm, trange
+from tqdm.auto import tqdm
 from transformers import AdamW, get_linear_schedule_with_warmup
 
 from src.train_utils.helpers import AverageMeter, EarlyStopping
@@ -202,9 +202,12 @@ class Trainer:
                 logger.info("  Starting training from scratch")
 
         model.zero_grad()
-        train_iterator = trange(epochs_trained, int(num_train_epochs), position=0, desc="Epoch")
-        train_iterator.set_postfix(LR=optimizer.param_groups[0]["lr"])
+        train_iterator = range(epochs_trained, int(num_train_epochs))
+
         for epoch, _ in enumerate(train_iterator):
+
+            logger.info(f"On epoch: {epoch+1}/{int(num_train_epochs)}")
+
             epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=1, desc="Training")
             total_train_loss = AverageMeter()
             for step, inputs in enumerate(epoch_iterator):
@@ -229,9 +232,9 @@ class Trainer:
                     optimizer.step()
                     scheduler.step()
                     # optimizer.zero_grad()
-                    # scheduler.zero_grad()
                     model.zero_grad()
                     global_step += 1
+
             logs = dict()
 
             if self.args.evaluate_during_training:
@@ -240,7 +243,9 @@ class Trainer:
                     model, val_dataset=self.val_inf_dataset
                 )
 
-                epoch_iterator.set_postfix(mAP_strict=logs["mAP_strict"], mAP_relaxed=logs["mAP_relaxed"])
+                for metric, value in logs.items():
+                    logger.info(f"{metric} : {value}")
+                logger.warning(f"Learning rate reduces to {optimizer.param_groups[0]['lr']}")
 
                 # Save model checkpoint
                 output_dir = os.path.join(self.args.output_dir, "best_model")
@@ -325,7 +330,6 @@ class Trainer:
             auc = roc_auc_score(labels, predictions)
             predictions = (predictions > 0.5).astype(np.int)
             acc = accuracy_score(labels, predictions)
-            epoch_iterator.set_postfix(VAL_AUC=auc, VAL_ACC=acc)
             return total_val_loss.avg, auc, acc
 
     @classmethod

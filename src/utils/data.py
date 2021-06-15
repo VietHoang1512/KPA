@@ -29,7 +29,7 @@ def calc_mean_average_precision(df: pd.DataFrame, label_column: str) -> float:
 def evaluate_predictions(merged_df: pd.DataFrame):
     mAP_strict = calc_mean_average_precision(merged_df, "label_strict")
     mAP_relaxed = calc_mean_average_precision(merged_df, "label_relaxed")
-    logger.info(f"mAP strict= {mAP_strict} ; mAP relaxed = {mAP_relaxed}")
+    # logger.info(f"mAP strict= {mAP_strict} ; mAP relaxed = {mAP_relaxed}")
     return mAP_strict, mAP_relaxed
 
 
