@@ -31,4 +31,4 @@
 
 ### Utils
 
-- [ ] K-folds
+- [x] K-folds
