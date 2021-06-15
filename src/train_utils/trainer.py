@@ -208,7 +208,7 @@ class Trainer:
 
             logger.info(f"On epoch: {epoch+1}/{int(num_train_epochs)}")
 
-            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=1, desc="Training")
+            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=0, desc="Training")
             total_train_loss = AverageMeter()
             for step, inputs in enumerate(epoch_iterator):
 
@@ -310,7 +310,7 @@ class Trainer:
         val_df = val_dataloader.dataset.df.copy()
         labels = []
         predictions = []
-        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=1, desc="Evaluating")
+        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=0, desc="Evaluating")
         total_val_loss = AverageMeter()
         for inputs in epoch_iterator:
             val_loss, prob, label = self._prediction_loop(model, inputs)
