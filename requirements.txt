@@ -1,10 +1,11 @@
+gdown
 pandas
 numpy
 scikit-learn
 tqdm
 seaborn
 matplotlib
-# transformers==4.6.1
+transformers
 tensorboardX
 datasets
 accelerate
