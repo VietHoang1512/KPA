@@ -6,6 +6,9 @@ from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
 from src.baselines.data_argument import DataArguments
+from src.utils.logging import custom_logger
+
+logger = custom_logger(__name__)
 
 
 class BertSiameseDataset(Dataset):
@@ -83,9 +86,13 @@ class BertSiameseDataset(Dataset):
             padding="max_length",
             return_token_type_ids=True,
             truncation=True,
+            return_overflowing_tokens=True,
         )
         input_ids = inputs["input_ids"]
         attention_mask = inputs["attention_mask"]
         token_type_ids = inputs["token_type_ids"]
+
+        if inputs["num_truncated_tokens"] > 0:
+            logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
 
         return input_ids, attention_mask, token_type_ids

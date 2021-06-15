@@ -7,6 +7,9 @@ from transformers import PreTrainedTokenizer
 from transformers.tokenization_utils_base import TruncationStrategy
 
 from src.question_answering.data_argument import DataArguments
+from src.utils.logging import custom_logger
+
+logger = custom_logger(__name__)
 
 
 class BertQADataset(Dataset):
@@ -117,21 +120,28 @@ class BertQADataset(Dataset):
             key_point_pairs = key_point_tokens
             argument_pairs = argument_tokens
 
+        max_length = max_topic_length + max_statement_length + self.sequence_pair_added_tokens
+
         encoded_key_point = self.tokenizer.encode_plus(
             key_point_texts,
             key_point_pairs,
             truncation=self.truncation,
             padding="max_length",
-            max_length=max_topic_length + max_statement_length + self.sequence_pair_added_tokens,
+            max_length=max_length,
             return_token_type_ids=True,
+            return_overflowing_tokens=True,
         )
+
         encoded_argument = self.tokenizer.encode_plus(
             argument_texts,
             argument_pairs,
             truncation=self.truncation,
             padding="max_length",
-            max_length=max_topic_length + max_statement_length + self.sequence_pair_added_tokens,
+            max_length=max_length,
             return_token_type_ids=True,
+            return_overflowing_tokens=True,
         )
+        if encoded_key_point["num_truncated_tokens"] > 0 or encoded_argument["num_truncated_tokens"] > 0:
+            logger.warning(f"String is truncated with maximum length {max_length}")
 
         return encoded_key_point, encoded_argument
