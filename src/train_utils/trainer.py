@@ -255,6 +255,7 @@ class Trainer:
                 self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
 
                 if self.es.is_best:
+                    self.logger.info(f"Saved prediction to {output_dir}")
                     self._save_prediction(prediction=prediction, output_dir=output_dir)
 
             # Save model after each epoch
@@ -372,7 +373,6 @@ class Trainer:
     def _save_prediction(self, prediction, output_dir):
         with open(os.path.join(output_dir, "predictions.p"), "w") as f:
             json.dump(prediction, f, indent=4)
-        self.logger.info(f"Saved prediction to {output_dir}")
 
     def _prediction_loop(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
 

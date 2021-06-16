@@ -36,6 +36,6 @@ class ModelArguments:
     drop_rate: float = field(default=0.1, metadata={"help": "Model dropout rate."})
     loss_fct: str = field(default="constrastive", metadata={"help": "Loss function used for training siamese network."})
     distance: str = field(
-        default="euclide", metadata={"help": "Function that returns a distance between two emeddings."}
+        default="euclidean", metadata={"help": "Function that returns a distance between two emeddings."}
     )
     margin: float = field(default=1.0, metadata={"help": "Margin distance value."})
