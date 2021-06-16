@@ -72,7 +72,6 @@ class TrainingArguments:
 
     @cached_property
     def _setup_devices(self):
-        print("PyTorch: setting up devices")
         if self.no_cuda:
             return torch.device("cpu")
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")

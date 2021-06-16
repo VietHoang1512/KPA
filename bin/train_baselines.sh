@@ -9,7 +9,6 @@ do
                 --distance "euclidean" \
                 --directory "kpm_6_folds/fold_$fold_id" \
                 --logging_dir "runs/qa/fold_$fold_id" \
-                --no_cuda False \
                 --overwrite_output_dir \
                 --num_train_epochs 15 \
                 --early_stop 5 \
