@@ -34,9 +34,6 @@ def is_tensorboard_available():
     return _has_tensorboard
 
 
-logger = custom_logger(__name__)
-
-
 class Trainer:
     def __init__(
         self,
@@ -71,12 +68,15 @@ class Trainer:
         self.val_inf_dataset = val_inf_dataset
         self.optimizers = optimizers
         self.es = EarlyStopping(patience=self.args.early_stop, mode="max")
+
+        self.logger = custom_logger(__name__, logging_dir=args.logging_dir)
+
         if tb_writer is not None:
             self.tb_writer = tb_writer
         elif is_tensorboard_available():
             self.tb_writer = SummaryWriter(log_dir=self.args.logging_dir)
         if not is_tensorboard_available():
-            logger.warning(
+            self.logger.warning(
                 "You are instantiating a Trainer but Tensorboard is not installed. You should consider installing it."
             )
 
@@ -159,7 +159,7 @@ class Trainer:
             optimizer.load_state_dict(torch.load(os.path.join(model_path, "optimizer.pt")))
             scheduler.load_state_dict(torch.load(os.path.join(model_path, "scheduler.pt")))
             scheduler.load_state_dict(torch.load(os.path.join(model_path, "model.pt")))
-            logger.info("Loaded all previous model, optimizer, scheduler states")
+            self.logger.info("Loaded all previous model, optimizer, scheduler states")
 
         torch.save(self.args, os.path.join(self.args.output_dir, "training_args.bin"))
 
@@ -171,13 +171,15 @@ class Trainer:
 
         total_train_batch_size = self.args.train_batch_size * self.args.gradient_accumulation_steps
 
-        logger.info("***** Running training *****")
-        logger.info("  Num examples = %d", self.num_examples(train_dataloader))
-        logger.info("  Num Epochs = %d", num_train_epochs)
-        logger.info("  Training batch size = %d", self.args.train_batch_size)
-        logger.info("  Total train batch size (w. parallel, distributed & accumulation) = %d", total_train_batch_size)
-        logger.info("  Gradient Accumulation steps = %d", self.args.gradient_accumulation_steps)
-        logger.info("  Total optimization steps = %d", t_total)
+        self.logger.info("***** Running training *****")
+        self.logger.info("  Num examples = %d", self.num_examples(train_dataloader))
+        self.logger.info("  Num Epochs = %d", num_train_epochs)
+        self.logger.info("  Training batch size = %d", self.args.train_batch_size)
+        self.logger.info(
+            "  Total train batch size (w. parallel, distributed & accumulation) = %d", total_train_batch_size
+        )
+        self.logger.info("  Gradient Accumulation steps = %d", self.args.gradient_accumulation_steps)
+        self.logger.info("  Total optimization steps = %d", t_total)
 
         global_step = 0
         epochs_trained = 0
@@ -193,20 +195,20 @@ class Trainer:
                     len(train_dataloader) // self.args.gradient_accumulation_steps
                 )
 
-                logger.info("  Continuing training from checkpoint, will skip to saved global_step")
-                logger.info("  Continuing training from epoch %d", epochs_trained)
-                logger.info("  Continuing training from global step %d", global_step)
-                logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
+                self.logger.info("  Continuing training from checkpoint, will skip to saved global_step")
+                self.logger.info("  Continuing training from epoch %d", epochs_trained)
+                self.logger.info("  Continuing training from global step %d", global_step)
+                self.logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
             except ValueError:
                 global_step = 0
-                logger.info("  Starting training from scratch")
+                self.logger.info("  Starting training from scratch")
 
         model.zero_grad()
         train_iterator = range(epochs_trained, int(num_train_epochs))
 
         for epoch, _ in enumerate(train_iterator):
 
-            logger.info(f"On epoch: {epoch+1}/{int(num_train_epochs)}")
+            self.logger.info(f"On epoch: {epoch+1}/{int(num_train_epochs)}")
 
             epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=0, desc="Training")
             total_train_loss = AverageMeter()
@@ -244,8 +246,8 @@ class Trainer:
                 )
 
                 for metric, value in logs.items():
-                    logger.info(f"{metric} : {value}")
-                logger.warning(f"Learning rate reduces to {optimizer.param_groups[0]['lr']}")
+                    self.logger.info(f"{metric} : {value}")
+                self.logger.warning(f"Learning rate reduces to {optimizer.param_groups[0]['lr']}")
 
                 # Save model checkpoint
                 output_dir = os.path.join(self.args.output_dir, "best_model")
@@ -258,7 +260,7 @@ class Trainer:
             # Save model after each epoch
             output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
             os.makedirs(output_dir, exist_ok=True)
-            logger.info("Saving optimizer and scheduler states to %s", output_dir)
+            self.logger.info("Saving optimizer and scheduler states to %s", output_dir)
             torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
             torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
             torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
@@ -269,7 +271,7 @@ class Trainer:
                     self.tb_writer.add_scalar(k, v, epoch)
 
             if self.es.early_stop:
-                logger.warning("Early stopping")
+                self.logger.warning("Early stopping")
                 break
 
         if self.args.do_inference:
@@ -281,7 +283,7 @@ class Trainer:
         if not self.args.evaluate_during_training:
             output_dir = self.args.output_dir
             os.makedirs(output_dir, exist_ok=True)
-            logger.info("Saving model checkpoint to %s", output_dir)
+            self.logger.info("Saving model checkpoint to %s", output_dir)
             self.es(0, model, optimizer, scheduler, output_dir)
 
     def _training_step(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
@@ -370,7 +372,7 @@ class Trainer:
     def _save_prediction(self, prediction, output_dir):
         with open(os.path.join(output_dir, "predictions.p"), "w") as f:
             json.dump(prediction, f, indent=4)
-        logger.info(f"Saved prediction to {output_dir}")
+        self.logger.info(f"Saved prediction to {output_dir}")
 
     def _prediction_loop(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
 
