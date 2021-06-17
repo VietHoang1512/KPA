@@ -5,9 +5,12 @@ from typing import Any, Dict
 
 import torch
 
+from src.train_utils.helpers import cached_property
+
 
 @dataclass
 class TrainingArguments:
+
     """TrainingArguments is the subset of the arguments we use in our example
     scripts."""
 
@@ -54,9 +57,24 @@ class TrainingArguments:
 
     logging_dir: str = field(default=None, metadata={"help": "Tensorboard log dir."})
 
-    seed: int = field(default=1512, metadata={"help": "random seed for initialization"})
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    seed: int = field(default=1512, metadata={"help": "Random seed for initialization"})
+
+    no_cuda: bool = field(default=False, metadata={"help": "Whether to not use CUDA even when it is available or not."})
+
     num_workers: int = field(default=2, metadata={"help": "Number of workers for data loading."})
+
+    @property
+    def device(self) -> torch.device:
+        """
+        The device used by this process.
+        """
+        return self._setup_devices
+
+    @cached_property
+    def _setup_devices(self):
+        if self.no_cuda:
+            return torch.device("cpu")
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def to_json_string(self):
         """Serializes this instance to a JSON string."""

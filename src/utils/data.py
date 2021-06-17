@@ -1,17 +1,23 @@
 import json
-import logging
 import os
+from typing import List, Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from sklearn.metrics import average_precision_score
 
-logger = logging.getLogger(__name__)
+from src.utils.logging import custom_logger
+
+logger = custom_logger(__name__)
 
 
 def get_ap(df: pd.DataFrame, label_column: str, top_percentile: float = 0.5):
     top = int(len(df) * top_percentile)
     df = df.sort_values("score", ascending=False).head(top)
+    # after selecting top percentile candidates, we set the score for the dummy kp to 1, to prevent it from increasing the precision.
+    df.loc[df["key_point_id"] == "dummy_id", "score"] = 0.99
     return average_precision_score(y_true=df[label_column], y_score=df["score"])
 
 
@@ -58,12 +64,6 @@ def get_predictions(predictions_file: str, labels_df: pd.DataFrame, arg_df: pd.D
     return merged_df
 
 
-"""
-this method chooses the best key point for each argument
-and generates a dataframe with the matches and scores
-"""
-
-
 def load_predictions(predictions_dir: str) -> pd.DataFrame:
     arg = []
     kp = []
@@ -75,13 +75,16 @@ def load_predictions(predictions_dir: str) -> pd.DataFrame:
             arg.append(arg_id)
             kp.append(best_kp[0])
             scores.append(best_kp[1])
+    print(f"loaded predictions for {len(arg)} arguments")
     return pd.DataFrame({"arg_id": arg, "key_point_id": kp, "score": scores})
 
 
+def extract_topic(text: str) -> int:
+    topic_id = text.split("_")[1]
+    return int(topic_id)
+
+
 def get_data(gold_data_dir: str, subset: str) -> pd.DataFrame:
-    def extract_topic(text: str) -> int:
-        topic_id = text.split("_")[1]
-        return int(topic_id)
 
     logger.info(f"Getting {subset} from {gold_data_dir}")
     arg_df, kp_df, labels_df = load_kpm_data(gold_data_dir, subset)
@@ -99,11 +102,13 @@ def get_data(gold_data_dir: str, subset: str) -> pd.DataFrame:
         left_on=["key_point_id", "topic", "stance", "topic_id"],
         right_on=["key_point_id", "topic", "stance", "topic_id"],
     )
+    assert len(merged_df) == len(labels_df), "Merging dataframes fail"
     return merged_df, arg_df, kp_df, labels_df
 
 
 def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.DataFrame:
-    """Pair up argmument and keypont to generate score.
+    """
+    Pair up argmument and keypont to generate score.
 
     Args:
         arg_df (pd.DataFrame): Arguments dataframe by topic and stance
@@ -112,7 +117,6 @@ def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.Data
     Returns:
         pd.DataFrame: All possible argmument-keypont pair
     """
-
     topic_id2topic = pd.Series(arg_df.topic, index=arg_df.topic_id).to_dict()
     topic_id2argument = {topic_id: [] for topic_id in arg_df.topic_id.unique()}
     topic_id2keypoint = {topic_id: [] for topic_id in arg_df.topic_id.unique()}
@@ -142,3 +146,20 @@ def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.Data
     df = pd.DataFrame(rows, columns=["arg_id", "keypoint_id", "argument", "key_point", "topic", "topic_id", "stance"])
     df["label"] = 0
     return df
+
+
+def length_plot(lengths: List[int], image_path: Optional[str] = "tmp.png") -> None:
+    """
+    Plot the sequence length statistic
+    Args:
+        lengths (List): Sequence lengths (by word or character)
+    Returns:
+        None
+    """
+    plt.figure(figsize=(15, 9))
+    textstr = f" Mean: {np.mean(lengths):.2f} \u00B1 {np.std(lengths):.2f}  Max: {np.max(lengths)}  Median: {np.median(lengths)}"
+    logger.info(image_path + textstr)
+    plt.annotate(textstr, xy=(0.1, 0.9), fontsize=14, xycoords="axes fraction")
+    sns.countplot(x=lengths, orient="h")
+    plt.savefig(image_path, bbox_inches="tight")
+    plt.close()

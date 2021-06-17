@@ -5,10 +5,13 @@ import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
-from src.bert.data_argument import DataArguments
+from src.baselines.data_argument import DataArguments
+from src.utils.logging import custom_logger
+
+logger = custom_logger(__name__)
 
 
-class BertKPADataset(Dataset):
+class BertSiameseDataset(Dataset):
     def __init__(
         self,
         df: pd.DataFrame,
@@ -17,7 +20,8 @@ class BertKPADataset(Dataset):
         tokenizer: PreTrainedTokenizer,
         args: DataArguments,
     ):
-        """Bert Keypoint Argument Dataset.
+        """
+        Bert Keypoint Argument Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
@@ -30,9 +34,9 @@ class BertKPADataset(Dataset):
         self.df = df
         self.arg_df = arg_df.copy()
         self.labels_df = labels_df.copy()
-        self.topic = df["topic"].values
-        self.argument = df["argument"].values
-        self.key_point = df["key_point"].values
+        self.topic = df["topic"].tolist()
+        self.argument = df["argument"].tolist()
+        self.key_point = df["key_point"].tolist()
         self.label = df["label"].values
         self.stance = df["stance"].values
         self.tokenizer = tokenizer
@@ -82,28 +86,13 @@ class BertKPADataset(Dataset):
             padding="max_length",
             return_token_type_ids=True,
             truncation=True,
+            return_overflowing_tokens=True,
         )
         input_ids = inputs["input_ids"]
         attention_mask = inputs["attention_mask"]
         token_type_ids = inputs["token_type_ids"]
 
+        if inputs["num_truncated_tokens"] > 0:
+            logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
+
         return input_ids, attention_mask, token_type_ids
-
-
-if __name__ == "__main__":
-    from transformers import AutoTokenizer
-
-    from src.utils.data import get_data
-
-    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
-    train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir="kpm_data", subset="train")
-    train_dataset = BertKPADataset(
-        df=train_df,
-        arg_df=train_arg_df,
-        labels_df=train_labels_df,
-        tokenizer=tokenizer,
-        max_len=24,
-        argument_max_len=48,
-    )
-    print(train_dataset[2])
-    print("DONE")

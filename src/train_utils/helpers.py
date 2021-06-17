@@ -1,15 +1,17 @@
-import logging
 import os
 import random
 
 import numpy as np
 import torch
 
-logger = logging.getLogger(__name__)
+from src.utils.logging import custom_logger
+
+logger = custom_logger(__name__)
 
 
 def seed_everything(seed: int) -> None:
-    """Seed for reproceducing.
+    """
+    Seed for reproceducing.
 
     Args:
         seed (int): seed number
@@ -43,7 +45,6 @@ class AverageMeter(object):
 
 class EarlyStopping:
     def __init__(self, patience: int = 7, mode: str = "max", delta: float = 0):
-
         """Early stopping when the criterion met."""
         self.patience = patience
         self.counter = 0
@@ -51,6 +52,7 @@ class EarlyStopping:
         self.best_score = None
         self.early_stop = False
         self.delta = delta
+        self.is_best = True
         if self.mode == "min":
             self.val_score = np.Inf
         else:
@@ -65,10 +67,11 @@ class EarlyStopping:
 
         if self.best_score is None:
             self.best_score = score
+            self.is_best = True
             self.save_checkpoint(epoch_score, model, optimizer, scheduler, output_dir)
             return True
         elif score < self.best_score + self.delta:
-
+            self.is_best = False
             self.counter += 1
             print("Validation score: {} which is not an improvement from {}".format(score, self.best_score))
             print("EarlyStopping counter: {} out of {}".format(self.counter, self.patience))
@@ -86,7 +89,7 @@ class EarlyStopping:
                     self.val_score, epoch_score, output_dir
                 )
             )
-            logger.info("Saving optimizer and scheduler states to %s", output_dir)
+            logger.info("Saving best optimizer and scheduler states to %s", output_dir)
             torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
             torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
             torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
@@ -94,5 +97,26 @@ class EarlyStopping:
         self.val_score = epoch_score
 
 
-def count_parameters(model) -> int:
+def count_parameters(model: torch.nn.Module) -> int:
     return sum(p.numel() for p in model.parameters() if p.requires_grad is True)
+
+
+class cached_property(property):
+    """
+    Descriptor that mimics @property but caches output in member variable.
+    From tensorflow_datasets
+    Built-in in functools from Python 3.8.
+    """
+
+    def __get__(self, obj, objtype=None):
+        # See docs.python.org/3/howto/descriptor.html#properties
+        if obj is None:
+            return self
+        if self.fget is None:
+            raise AttributeError("unreadable attribute")
+        attr = "__cached_" + self.fget.__name__
+        cached = getattr(obj, attr, None)
+        if cached is None:
+            cached = self.fget(obj)
+            setattr(obj, attr, cached)
+        return cached
