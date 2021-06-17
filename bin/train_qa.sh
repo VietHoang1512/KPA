@@ -6,7 +6,7 @@ do
                 --model_name_or_path "roberta-base" \
                 --tokenizer "roberta-base" \
                 --loss_fct "online-constrastive" \
-                --distance "euclidean" \
+                --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
                 --logging_dir "runs/qa/fold_$fold_id" \
                 --overwrite_output_dir \

@@ -110,7 +110,7 @@ class MixedTrainDataset(Dataset):
 
         return input_ids, attention_mask, token_type_ids
 
-    def _process_data(self, df: DataFrame) -> List[Dict]:
+    def _process_data(self, df: pd.DataFrame) -> List[Dict]:
         data = []
         cnt_neg = 0
         cnt_pos = 0
