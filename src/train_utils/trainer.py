@@ -239,7 +239,7 @@ class Trainer:
             logs = dict()
 
             if self.args.evaluate_during_training:
-                logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
+                # logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
                 (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
                     model, val_dataset=self.val_inf_dataset
                 )

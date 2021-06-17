@@ -75,6 +75,10 @@ class MixedModel(nn.Module):
             self.triplet_loss = lambda rep_anchor, rep_pos, rep_neg: self.hard_positive_triplet_loss(
                 rep_anchor, rep_pos, rep_neg
             ) + self.hard_negative_triplet_loss(rep_anchor, rep_pos, rep_neg)
+        else:
+            raise NotImplementedError(
+                f"Sample selection strategy {self.args.sample_selection} is not implemented yet. Must be `all`, `pos`, `neg` or `both` "
+            )
 
         if self.args.loss_fct == "constrastive":
             self.pair_loss = ContrastiveLoss(distance_metric=self.distance_metric, margin=args.pair_margin)
@@ -197,6 +201,6 @@ class MixedModel(nn.Module):
 
         loss = pos_loss + neg_loss + triplet_loss
         similarity = (
-            F.relu(self.args.pair_margin - self.distance_metric(argument_rep, pos_keypoint_rep)) / self.args.pair_margin
-        )
+            self.args.pair_margin - self.distance_metric(argument_rep, pos_keypoint_rep)
+        ) / self.args.pair_margin
         return loss, similarity
