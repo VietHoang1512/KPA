@@ -4,13 +4,15 @@ import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 
 from src.baselines.model_argument import ModelArguments
-from src.train_utils.distance import SiameseDistanceMetric
-from src.train_utils.losses import (
+from src.losses import (
     ContrastiveLoss,
     CosineSimilarityLoss,
+    HardNegativeTripletLoss,
+    HardPositiveTripletLoss,
     OnlineContrastiveLoss,
     TripletLoss,
 )
+from src.train_utils.distance import SiameseDistanceMetric
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
@@ -57,7 +59,22 @@ class MixedModel(nn.Module):
                 f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `euclidean`, `manhattan` or `consine`"
             )
 
-        self.triplet_loss = TripletLoss(self.distance_metric, triplet_margin=self.args.triplet_margin)
+        if self.args.sample_selection == "all":
+            self.triplet_loss = TripletLoss(self.distance_metric, triplet_margin=self.args.triplet_margin)
+        elif self.args.sample_selection == "pos":
+            self.triplet_loss = HardPositiveTripletLoss(self.distance_metric, triplet_margin=self.args.triplet_margin)
+        elif self.args.sample_selection == "neg":
+            self.triplet_loss = HardNegativeTripletLoss(self.distance_metric, triplet_margin=self.args.triplet_margin)
+        elif self.args.sample_selection == "both":
+            self.hard_positive_triplet_loss = HardPositiveTripletLoss(
+                self.distance_metric, triplet_margin=self.args.triplet_margin
+            )
+            self.hard_negative_triplet_loss = HardNegativeTripletLoss(
+                self.distance_metric, triplet_margin=self.args.triplet_margin
+            )
+            self.triplet_loss = lambda rep_anchor, rep_pos, rep_neg: self.hard_positive_triplet_loss(
+                rep_anchor, rep_pos, rep_neg
+            ) + self.hard_negative_triplet_loss(rep_anchor, rep_pos, rep_neg)
 
         if self.args.loss_fct == "constrastive":
             self.pair_loss = ContrastiveLoss(distance_metric=self.distance_metric, margin=args.pair_margin)

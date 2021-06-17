@@ -15,15 +15,16 @@
 
 | Model               | BERT/ConvBERT               | DistilBERT         | ALBERT             | XLNet            | RoBERTa                | ELECTRA            | BART            |
 | ------------------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
-| Siamese Baseline            | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Siamese Question Answering-like              | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Siamese Baseline            | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| Siamese Question Answering-like              | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| Custom loss Baseline             | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 
 ### Loss
 
 - [x] Constrastive
 - [x] Online Constrastive
-- [ ] Triplet
-- [ ] Online Triplet
+- [x] Triplet
+- [x] Online Triplet (Hard negative/positive mining)
 
 ### Distance
 
