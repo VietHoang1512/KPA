@@ -13,7 +13,6 @@ from transformers import AdamW, get_linear_schedule_with_warmup
 
 from src.train_utils.helpers import AverageMeter, EarlyStopping
 from src.train_utils.training_argument import TrainingArguments
-from src.utils import constants
 from src.utils.data import evaluate_predictions
 from src.utils.logging import custom_logger
 
@@ -259,12 +258,12 @@ class Trainer:
                     self._save_prediction(prediction=prediction, output_dir=output_dir)
 
             # Save model after each epoch
-            output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
-            os.makedirs(output_dir, exist_ok=True)
-            self.logger.info("Saving optimizer and scheduler states to %s", output_dir)
-            torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
-            torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
-            torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
+            # output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
+            # os.makedirs(output_dir, exist_ok=True)
+            # self.logger.info("Saving optimizer and scheduler states to %s", output_dir)
+            # torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+            # torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+            # torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
 
             logs["TRAIN_LOSS"] = total_train_loss.avg
             if self.tb_writer:
