@@ -29,6 +29,6 @@ do
                 --argument_max_len 50 \
                 --stance_dim 32 \
                 --text_dim 256 \
-                --num_workers 2 \
+                --num_workers 0 \
                 --seed 0
 done
