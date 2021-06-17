@@ -26,3 +26,7 @@ repos:
         - --remove-all-unused-imports
         - --ignore-init-module-imports
         - --exclude=tests/*
+# -   repo: git://github.com/FalconSocial/pre-commit-mirrors-pep257
+#     sha: ''  # Use the sha / tag you want to point at
+#     hooks:
+#     -   id: pep257

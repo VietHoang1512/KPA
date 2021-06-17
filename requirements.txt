@@ -1,6 +1,12 @@
+torch
+gdown
 pandas
 numpy
 scikit-learn
 tqdm
+seaborn
+matplotlib
 transformers
 tensorboardX
+datasets
+accelerate

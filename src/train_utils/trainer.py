@@ -1,19 +1,20 @@
-import logging
+import json
 import os
 from typing import Dict, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+from sklearn.metrics import accuracy_score, roc_auc_score
 from torch.utils.data import DataLoader, Dataset
-from tqdm.auto import tqdm, trange
+from tqdm.auto import tqdm
 from transformers import AdamW, get_linear_schedule_with_warmup
 
-from src.utils import constants
+from src.train_utils.helpers import AverageMeter, EarlyStopping
+from src.train_utils.training_argument import TrainingArguments
 from src.utils.data import evaluate_predictions
-from src.utils.train_utils import AverageMeter, EarlyStopping
-
-from .training_argument import TrainingArguments
+from src.utils.logging import custom_logger
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -32,9 +33,6 @@ def is_tensorboard_available():
     return _has_tensorboard
 
 
-logger = logging.getLogger(__name__)
-
-
 class Trainer:
     def __init__(
         self,
@@ -47,6 +45,20 @@ class Trainer:
         tb_writer: Optional["SummaryWriter"] = None,
         optimizers: Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR] = None,
     ):
+        """
+        A simple but feature-complete training and eval loop for KPA  Model.
+
+        Args:
+            model (nn.Module): The model to train, evaluate or use for predictions
+            args (TrainingArguments): The arguments to tweak for training
+            train_dataset (Dataset): The dataset to use for training
+            val_dataset (Dataset): The dataset to use for evaluation
+            train_inf_dataset (Dataset): The dataset to use for evaluation with organizer scripts (corresponding to train dataset)
+            val_inf_dataset (Dataset): The dataset to use for evaluation with organizer scripts (corresponding to validation dataset)
+            tb_writer (Optional[, optional): [description]. Defaults to None. Tensorboard writer
+            optimizers (Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR], optional): [description]. Defaults to None.A tuple
+            containing the optimizer and the scheduler to use
+        """
         self.args = args
         self.model = model
         self.train_dataset = train_dataset
@@ -55,12 +67,15 @@ class Trainer:
         self.val_inf_dataset = val_inf_dataset
         self.optimizers = optimizers
         self.es = EarlyStopping(patience=self.args.early_stop, mode="max")
+
+        self.logger = custom_logger(__name__, logging_dir=args.logging_dir)
+
         if tb_writer is not None:
             self.tb_writer = tb_writer
         elif is_tensorboard_available():
             self.tb_writer = SummaryWriter(log_dir=self.args.logging_dir)
         if not is_tensorboard_available():
-            logger.warning(
+            self.logger.warning(
                 "You are instantiating a Trainer but Tensorboard is not installed. You should consider installing it."
             )
 
@@ -75,14 +90,15 @@ class Trainer:
     def get_val_dataloader(self, val_dataset: Dataset = None) -> DataLoader:
         val_dataset = val_dataset if val_dataset is not None else self.val_dataset
         data_loader = DataLoader(
-            val_dataset, batch_size=self.args.val_batch_size, shuffle=True, num_workers=self.args.num_workers
+            val_dataset, batch_size=self.args.val_batch_size, shuffle=False, num_workers=self.args.num_workers
         )
         return data_loader
 
     def get_optimizers(
         self, num_training_steps: int
     ) -> Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR]:
-        """Setup the optimizer and the learning rate scheduler.
+        """
+        Setup the optimizer and the learning rate scheduler.
 
         We provide a reasonable default that works well. If you want to
         use something else, you can pass a tuple in the Trainer's init,
@@ -108,19 +124,21 @@ class Trainer:
         )
         return optimizer, scheduler
 
+    @classmethod
     def num_examples(self, dataloader: DataLoader) -> int:
-        """Helper to get num of examples from a DataLoader, by accessing its
-        Dataset."""
+        """Helper to get num of examples from a DataLoader, by accessing its Dataset."""
         return len(dataloader.dataset)
 
     def train(self, model_path: str = None):
-        """Main training entry point.
+        """
+        Main training entry point.
 
         Args:
             model_path:
                 (Optional) Local path to model if model to train has been instantiated from a local path
                 If present, we will try reloading the optimizer/scheduler states from there.
         """
+        torch.cuda.empty_cache()
         train_dataloader = self.get_train_dataloader()
 
         t_total = int(len(train_dataloader) // self.args.gradient_accumulation_steps * self.args.num_train_epochs)
@@ -140,7 +158,7 @@ class Trainer:
             optimizer.load_state_dict(torch.load(os.path.join(model_path, "optimizer.pt")))
             scheduler.load_state_dict(torch.load(os.path.join(model_path, "scheduler.pt")))
             scheduler.load_state_dict(torch.load(os.path.join(model_path, "model.pt")))
-            logger.info("Loaded all previous model, optimizer, scheduler states")
+            self.logger.info("Loaded all previous model, optimizer, scheduler states")
 
         torch.save(self.args, os.path.join(self.args.output_dir, "training_args.bin"))
 
@@ -152,13 +170,15 @@ class Trainer:
 
         total_train_batch_size = self.args.train_batch_size * self.args.gradient_accumulation_steps
 
-        logger.info("***** Running training *****")
-        logger.info("  Num examples = %d", self.num_examples(train_dataloader))
-        logger.info("  Num Epochs = %d", num_train_epochs)
-        logger.info("  Training batch size = %d", self.args.train_batch_size)
-        logger.info("  Total train batch size (w. parallel, distributed & accumulation) = %d", total_train_batch_size)
-        logger.info("  Gradient Accumulation steps = %d", self.args.gradient_accumulation_steps)
-        logger.info("  Total optimization steps = %d", t_total)
+        self.logger.info("***** Running training *****")
+        self.logger.info("  Num examples = %d", self.num_examples(train_dataloader))
+        self.logger.info("  Num Epochs = %d", num_train_epochs)
+        self.logger.info("  Training batch size = %d", self.args.train_batch_size)
+        self.logger.info(
+            "  Total train batch size (w. parallel, distributed & accumulation) = %d", total_train_batch_size
+        )
+        self.logger.info("  Gradient Accumulation steps = %d", self.args.gradient_accumulation_steps)
+        self.logger.info("  Total optimization steps = %d", t_total)
 
         global_step = 0
         epochs_trained = 0
@@ -174,20 +194,23 @@ class Trainer:
                     len(train_dataloader) // self.args.gradient_accumulation_steps
                 )
 
-                logger.info("  Continuing training from checkpoint, will skip to saved global_step")
-                logger.info("  Continuing training from epoch %d", epochs_trained)
-                logger.info("  Continuing training from global step %d", global_step)
-                logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
+                self.logger.info("  Continuing training from checkpoint, will skip to saved global_step")
+                self.logger.info("  Continuing training from epoch %d", epochs_trained)
+                self.logger.info("  Continuing training from global step %d", global_step)
+                self.logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
             except ValueError:
                 global_step = 0
-                logger.info("  Starting training from scratch")
+                self.logger.info("  Starting training from scratch")
 
         model.zero_grad()
-        train_iterator = trange(epochs_trained, int(num_train_epochs), desc="Epoch")
-        for epoch, _ in enumerate(train_iterator):
-            epoch_iterator = tqdm(train_dataloader, desc="Training")
-            total_train_loss = AverageMeter()
+        train_iterator = range(epochs_trained, int(num_train_epochs))
 
+        for epoch, _ in enumerate(train_iterator):
+
+            self.logger.info(f"On epoch: {epoch+1}/{int(num_train_epochs)}")
+
+            epoch_iterator = tqdm(train_dataloader, total=len(train_dataloader), position=0, desc="Training")
+            total_train_loss = AverageMeter()
             for step, inputs in enumerate(epoch_iterator):
 
                 # Skip past any already trained steps if resuming training
@@ -209,34 +232,58 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), self.args.max_grad_norm)
                     optimizer.step()
                     scheduler.step()
+                    # optimizer.zero_grad()
                     model.zero_grad()
                     global_step += 1
+
             logs = dict()
 
             if self.args.evaluate_during_training:
-                logs["mAP_strict"], logs["mAP_relaxed"] = self.evaluate(model, val_dataset=self.val_inf_dataset)
-                epoch_iterator.set_postfix(mAP_strict=logs["mAP_strict"], mAP_relaxed=logs["mAP_relaxed"])
+                logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
+                (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
+                    model, val_dataset=self.val_inf_dataset
+                )
+
+                for metric, value in logs.items():
+                    self.logger.info(f"{metric} : {value}")
+                self.logger.warning(f"Learning rate reduces to {optimizer.param_groups[0]['lr']}")
 
                 # Save model checkpoint
-                output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
+                output_dir = os.path.join(self.args.output_dir, "best_model")
                 os.makedirs(output_dir, exist_ok=True)
-                logger.info("Saving model checkpoint to %s", output_dir)
-
                 self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
 
-            logs["VAL_LOSS"] = self.evaluate(model, display_loss=True)
+                if self.es.is_best:
+                    self.logger.info(f"Saved prediction to {output_dir}")
+                    self._save_prediction(prediction=prediction, output_dir=output_dir)
+
+            # Save model after each epoch
+            # output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
+            # os.makedirs(output_dir, exist_ok=True)
+            # self.logger.info("Saving optimizer and scheduler states to %s", output_dir)
+            # torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
+            # torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+            # torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
+
             logs["TRAIN_LOSS"] = total_train_loss.avg
             if self.tb_writer:
                 for k, v in logs.items():
                     self.tb_writer.add_scalar(k, v, epoch)
 
+            if self.es.early_stop:
+                self.logger.warning("Early stopping")
+                break
+
+        if self.args.do_inference:
+            # TODO: inference
+            pass
         if self.tb_writer:
             self.tb_writer.close()
 
         if not self.args.evaluate_during_training:
             output_dir = self.args.output_dir
             os.makedirs(output_dir, exist_ok=True)
-            logger.info("Saving model checkpoint to %s", output_dir)
+            self.logger.info("Saving model checkpoint to %s", output_dir)
             self.es(0, model, optimizer, scheduler, output_dir)
 
     def _training_step(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
@@ -263,22 +310,31 @@ class Trainer:
 
         val_dataloader = self.get_val_dataloader(val_dataset)
         val_df = val_dataloader.dataset.df.copy()
+        labels = []
         predictions = []
-        epoch_iterator = tqdm(val_dataloader, desc="Evaluating")
+        epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=0, desc="Evaluating")
         total_val_loss = AverageMeter()
         for inputs in epoch_iterator:
-            val_loss, prob, n_val_samples = self._prediction_loop(model, inputs)
+            val_loss, prob, label = self._prediction_loop(model, inputs)
+            n_val_samples = len(label)
             total_val_loss.update(val_loss, n_val_samples)
             predictions.extend(prob)
+            labels.extend(label)
+
             if display_loss:
                 epoch_iterator.set_postfix(VAL_LOSS=total_val_loss.avg)
-
+        labels = np.array(labels)
+        predictions = np.array(predictions)
         val_df["label"] = predictions
         if not display_loss:
             return self.calculate_metric(val_df, val_dataloader.dataset.labels_df, val_dataloader.dataset.arg_df)
         else:
-            return total_val_loss.avg
+            auc = roc_auc_score(labels, predictions)
+            predictions = (predictions > 0.5).astype(np.int)
+            acc = accuracy_score(labels, predictions)
+            return total_val_loss.avg, auc, acc
 
+    @classmethod
     def calculate_metric(self, val_df: pd.DataFrame, labels_df: pd.DataFrame, arg_df: pd.DataFrame):
         arg_df = arg_df[["arg_id", "topic", "stance"]].copy()
 
@@ -294,6 +350,7 @@ class Trainer:
             arg.append(arg_id)
             kp.append(best_kp[0])
             scores.append(best_kp[1])
+        print(f"loaded predictions for {len(arg)} arguments")
 
         predictions_df = pd.DataFrame({"arg_id": arg, "key_point_id": kp, "score": scores})
         # make sure each arg_id has a prediction
@@ -309,12 +366,18 @@ class Trainer:
         merged_df.loc[merged_df["key_point_id"] == "dummy_id", "label"] = 0
         merged_df["label_strict"] = merged_df["label"].fillna(0)
         merged_df["label_relaxed"] = merged_df["label"].fillna(1)
-        return evaluate_predictions(merged_df)
+        return evaluate_predictions(merged_df), predictions
+
+    @classmethod
+    def _save_prediction(self, prediction, output_dir):
+        with open(os.path.join(output_dir, "predictions.p"), "w") as f:
+            json.dump(prediction, f, indent=4)
 
     def _prediction_loop(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
 
         model.eval()
         with torch.no_grad():
+            label = inputs["label"].cpu().detach().numpy().tolist()
             for k, v in inputs.items():
                 inputs[k] = v.to(self.args.device)
 
@@ -334,4 +397,4 @@ class Trainer:
         if self.args.gradient_accumulation_steps > 1:
             loss = loss / self.args.gradient_accumulation_steps
 
-        return loss.item(), prob, inputs[k].size(0)
+        return loss.item(), prob, label

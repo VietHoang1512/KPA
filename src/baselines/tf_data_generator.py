@@ -3,22 +3,33 @@ import pandas as pd
 import tensorflow as tf
 from transformers import PreTrainedTokenizer
 
-from src.bert.data_argument import DataArguments
+from src.baselines.data_argument import DataArguments
 
 
 class BertKPAGenerator(tf.keras.utils.Sequence):
-    """Data Generator for Keras model."""
-
     def __init__(
         self,
-        shuffle,
-        batch_size,
+        shuffle: bool,
+        batch_size: int,
         df: pd.DataFrame,
         arg_df: pd.DataFrame,
         labels_df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
         args: DataArguments,
     ):
+        """
+        Data Generator for Keras model.
+
+        Args:
+            shuffle (bool): Whether shuffle the provide dataframe
+            batch_size (int): Chunk size for loading
+            df (pd.DataFrame): Main dataframe
+            arg_df (pd.DataFrame): Argument dataframe
+            labels_df (pd.DataFrame): Label DataFrame
+            tokenizer (PreTrainedTokenizer): HugggingFace Tokenizer
+            args (DataArguments): Argument for data creation
+        """
+
         self.shuffle = shuffle
         self.batch_size = batch_size
 

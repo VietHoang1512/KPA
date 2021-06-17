@@ -4,6 +4,7 @@ from typing import Optional
 
 @dataclass
 class ModelArguments:
+
     """Arguments pertaining to which model/config/tokenizer we are going to
     fine- tune, or train from scratch."""
 
@@ -17,13 +18,24 @@ class ModelArguments:
         default=None,
         metadata={"help": "If training from scratch, pass a model type from https://huggingface.co/models "},
     )
+    cache_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Where do you want to store the pre-trained models downloaded from s3"},
+    )
     tokenizer: Optional[str] = field(
         default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
     )
     n_hiddens: int = field(
-        default=4, metadata={"help": "Concatenate n_hiddens final layer of [CLS] token's representation."}
+        default=4,
+        metadata={
+            "help": "Concatenate n_hiddens final layer of [CLS] token's representation. Use last hidden state if n_hiddens <=0"
+        },
     )
     stance_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding stance."})
     text_dim: int = field(default=32, metadata={"help": "Hidden representation dimension used for encoding text."})
     drop_rate: float = field(default=0.1, metadata={"help": "Model dropout rate."})
+    loss_fct: str = field(default="constrastive", metadata={"help": "Loss function used for training siamese network."})
+    distance: str = field(
+        default="euclidean", metadata={"help": "Function that returns a distance between two emeddings."}
+    )
     margin: float = field(default=1.0, metadata={"help": "Margin distance value."})
