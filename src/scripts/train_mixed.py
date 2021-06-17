@@ -133,8 +133,10 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_dataset = MixedTrainDataset(
+    val_dataset = MixedInferenceDataset(
         df=val_df,
+        arg_df=val_arg_df,
+        labels_df=val_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )

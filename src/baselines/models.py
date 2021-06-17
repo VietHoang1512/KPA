@@ -4,12 +4,12 @@ import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 
 from src.baselines.model_argument import ModelArguments
-from src.train_utils.distance import SiameseDistanceMetric
-from src.train_utils.losses import (
+from src.losses import (
     ContrastiveLoss,
     CosineSimilarityLoss,
     OnlineContrastiveLoss,
 )
+from src.train_utils.distance import SiameseDistanceMetric
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
