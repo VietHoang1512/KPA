@@ -3,7 +3,6 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 import torch
-from pandas.core.frame import DataFrame
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
