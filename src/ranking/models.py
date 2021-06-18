@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_metric_learning import distances
-from pytorch_metric_learning.losses import CircleLoss
+from pytorch_metric_learning import distances, losses
 from transformers import AutoConfig, AutoModel
 
 from src.baselines.model_argument import ModelArguments
@@ -43,7 +42,7 @@ class RankingModel(nn.Module):
         self.fc_stance = nn.Linear(1, self.args.stance_dim)
         if self.args.distance == "cosine":
             self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
-            self.circle_loss = CircleLoss(m=self.args.margin, distance=distances.CosineSimilarity())
+            self.circle_loss = losses.TripletMarginLoss(margin=self.args.margin, distance=distances.CosineSimilarity())
         else:
             raise NotImplementedError(
                 f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `consine`"
