@@ -91,12 +91,12 @@ class RankingModel(nn.Module):
         topic_input_ids,
         topic_attention_mask,
         topic_token_type_ids,
-        statements_ecoded,
+        statements_encoded,
         stance,
         label,
     ):
 
-        n_statements = statements_ecoded[0].shape[0]
+        n_statements = statements_encoded[0].shape[0]
 
         stance_rep = self.fc_stance(stance).repeat(n_statements, 1)
         topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids).repeat(
@@ -104,7 +104,7 @@ class RankingModel(nn.Module):
         )
 
         statement_bert_output = self._forward_text(
-            statements_ecoded[0][:, 0], statements_ecoded[0][:, 1], statements_ecoded[0][:, 2]
+            statements_encoded[0][:, 0], statements_encoded[0][:, 1], statements_encoded[0][:, 2]
         )
         statement_rep = torch.cat([stance_rep, topic_bert_output, statement_bert_output], axis=1)
         statement_rep = self.fc_text(statement_rep)

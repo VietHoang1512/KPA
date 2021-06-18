@@ -1,3 +1,4 @@
+import random
 from typing import Dict, List, Tuple
 
 import pandas as pd
@@ -5,10 +6,14 @@ import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
-from src.baselines.data_argument import DataArguments
+from src.ranking.data_argument import DataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
+
+
+def _extract_id(key_point_id: str) -> float:
+    return float(key_point_id.split("_")[-1]) + 1
 
 
 class RankingTrainDataset(Dataset):
@@ -31,6 +36,7 @@ class RankingTrainDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_len = args.max_len
         self.statement_max_len = args.statement_max_len
+        self.args = args
 
     def __len__(self):
         """Denotes the number of examples per epoch."""
@@ -43,14 +49,25 @@ class RankingTrainDataset(Dataset):
         stance = torch.tensor([datum["stance"]], dtype=torch.float)
         topic = datum["topic"]
 
-        statements = [datum["argument"]] + datum[1] + datum[0]
-        label = [0] * (len(datum[1])) + list(range(len(datum[0]) + 1))
+        random.shuffle(datum[1])
 
+        temp = list(zip(datum[0], datum["neg_class"]))
+        random.shuffle(temp)
+        datum[0], datum["neg_class"] = zip(*temp)
+        datum[0] = list(datum[0])
+        datum["neg_class"] = list(datum["neg_class"])
+
+        n_pos = min(len(datum[1]), self.args.max_pos)
+        n_neg = min(len(datum[0]), self.args.max_neg)
+
+        statements = [datum["key_point"]] + datum[1][:n_pos] + datum[0][:n_neg]
+        label = [datum["class"]] * (n_pos + 1) + datum["neg_class"][:n_neg]
+        # print(label)
         topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(text=topic, max_len=self.max_len)
-        statements_ecoded = []
 
+        statements_encoded = []
         for statement in statements:
-            statements_ecoded.append(
+            statements_encoded.append(
                 torch.stack(self._tokenize(text=statement, max_len=self.statement_max_len), axis=0)
             )
 
@@ -58,7 +75,7 @@ class RankingTrainDataset(Dataset):
             "topic_input_ids": topic_input_ids,
             "topic_attention_mask": topic_attention_mask,
             "topic_token_type_ids": topic_token_type_ids,
-            "statements_ecoded": torch.stack(statements_ecoded, axis=0),
+            "statements_encoded": torch.stack(statements_encoded, axis=0),
             "stance": stance,
             "label": torch.tensor(label, dtype=torch.float),
         }
@@ -84,21 +101,26 @@ class RankingTrainDataset(Dataset):
         return input_ids, attention_mask, token_type_ids
 
     def _process_data(self, df: pd.DataFrame) -> List[Dict]:
+        arg2kp = df[df["label"] == 1].set_index("arg_id")["key_point_id"].map(_extract_id).to_dict()
+        df["class"] = df["arg_id"].map(arg2kp).fillna(0)
         data = []
         cnt_neg = 0
         cnt_pos = 0
-        for _, arg_id_df in df.groupby(["arg_id"]):
-            arg_id_dict = {0: [], 1: []}
-            arg_id_dict.update(arg_id_df.iloc[0].to_dict())
-            for _, row in arg_id_df.iterrows():
-                arg_id_dict[row["label"]].append(row["key_point"])
-            if len(arg_id_dict[0]) == 0:
+        for key_point_id, key_point_id_df in df.groupby(["key_point_id"]):
+            key_point_id_dict = {0: [], 1: [], "neg_class": []}
+            key_point_id_dict.update(key_point_id_df.iloc[0].to_dict())
+            key_point_id_dict["class"] = _extract_id(key_point_id)
+            for _, row in key_point_id_df.iterrows():
+                key_point_id_dict[row["label"]].append(row["argument"])
+                if not row["label"]:
+                    key_point_id_dict["neg_class"].append(row["class"])
+            if len(key_point_id_dict[0]) == 0:
                 cnt_neg += 1
-            if len(arg_id_dict[1]) == 0:
+            if len(key_point_id_dict[1]) == 0:
                 cnt_pos += 1
-            data.append(arg_id_dict)
+            data.append(key_point_id_dict)
         logger.warning(
-            f"There are {cnt_neg} arguments without negative and {cnt_pos} postitive key points in total {len(data)}"
+            f"There are {cnt_neg} key points without negative and {cnt_pos} postitive key arguments in total {len(data)}"
         )
         return data
 
@@ -151,9 +173,9 @@ class RankingInferenceDataset(Dataset):
         stance = torch.tensor([self.stance[idx]], dtype=torch.float)
         label = [0, 0]
 
-        statements_ecoded = []
+        statements_encoded = []
         for statement in statements:
-            statements_ecoded.append(
+            statements_encoded.append(
                 torch.stack(self._tokenize(text=statement, max_len=self.statement_max_len), axis=0)
             )
 
@@ -161,7 +183,7 @@ class RankingInferenceDataset(Dataset):
             "topic_input_ids": topic_input_ids,
             "topic_attention_mask": topic_attention_mask,
             "topic_token_type_ids": topic_token_type_ids,
-            "statements_ecoded": torch.stack(statements_ecoded, axis=0),
+            "statements_encoded": torch.stack(statements_encoded, axis=0),
             "stance": stance,
             "label": torch.tensor(label, dtype=torch.float),
         }
