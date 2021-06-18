@@ -15,3 +15,4 @@ class DataArguments(BaseDataArguments):
     )
     max_pos: Optional[int] = field(default=5, metadata={"help": "maximum positive argument"})
     max_neg: Optional[int] = field(default=5, metadata={"help": "maximum negative argument"})
+    max_unknown: Optional[int] = field(default=5, metadata={"help": "maximum unknown argument"})

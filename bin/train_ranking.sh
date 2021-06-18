@@ -9,8 +9,9 @@ do
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
                 --logging_dir "runs/ranking/fold_$fold_id" \
-                --max_pos 5 \
-                --max_neg 5 \
+                --max_pos 15 \
+                --max_neg 50 \
+                --max_unknown 5 \
                 --overwrite_output_dir \
                 --num_train_epochs 15 \
                 --early_stop 5 \
@@ -21,13 +22,13 @@ do
                 --warmup_steps 0 \
                 --gradient_accumulation_steps 1 \
                 --learning_rate 0.00003 \
-                --margin 0.5 \
+                --margin 0.3 \
                 --drop_rate 0.1 \
-                --n_hiddens -1 \
+                --n_hiddens 4 \
                 --max_len 30 \
                 --statement_max_len 50 \
                 --stance_dim 32 \
                 --text_dim 256 \
-                --num_workers 0 \
+                --num_workers 1 \
                 --seed 0
 done

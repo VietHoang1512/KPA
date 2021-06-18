@@ -49,19 +49,20 @@ class RankingTrainDataset(Dataset):
         stance = torch.tensor([datum["stance"]], dtype=torch.float)
         topic = datum["topic"]
 
-        random.shuffle(datum[1])
+        random.shuffle(datum["pos"])
 
-        temp = list(zip(datum[0], datum["neg_class"]))
+        temp = list(zip(datum["neg"], datum["neg_class"]))
         random.shuffle(temp)
-        datum[0], datum["neg_class"] = zip(*temp)
-        datum[0] = list(datum[0])
+        datum["neg"], datum["neg_class"] = zip(*temp)
+        datum["neg"] = list(datum["neg"])
         datum["neg_class"] = list(datum["neg_class"])
 
-        n_pos = min(len(datum[1]), self.args.max_pos)
-        n_neg = min(len(datum[0]), self.args.max_neg)
+        n_pos = min(len(datum["pos"]), self.args.max_pos)
+        n_neg = min(len(datum["neg"]), self.args.max_neg)
+        n_unknown = min(len(datum["unknown"]), self.args.max_unknown)
 
-        statements = [datum["key_point"]] + datum[1][:n_pos] + datum[0][:n_neg]
-        label = [datum["class"]] * (n_pos + 1) + datum["neg_class"][:n_neg]
+        statements = [datum["key_point"]] + datum["pos"][:n_pos] + datum["neg"][:n_neg] + datum["unknown"][:n_unknown]
+        label = [datum["class"]] * (n_pos + 1) + datum["neg_class"][:n_neg] + list(range(20000, 20000 + n_unknown))
         # print(label)
         topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(text=topic, max_len=self.max_len)
 
@@ -107,16 +108,20 @@ class RankingTrainDataset(Dataset):
         cnt_neg = 0
         cnt_pos = 0
         for key_point_id, key_point_id_df in df.groupby(["key_point_id"]):
-            key_point_id_dict = {0: [], 1: [], "neg_class": []}
+            key_point_id_dict = {"neg": [], "pos": [], "neg_class": [], "unknown": []}
             key_point_id_dict.update(key_point_id_df.iloc[0].to_dict())
             key_point_id_dict["class"] = _extract_id(key_point_id)
             for _, row in key_point_id_df.iterrows():
-                key_point_id_dict[row["label"]].append(row["argument"])
-                if not row["label"]:
+                if row["label"] == 1:
+                    key_point_id_dict["pos"].append(row["argument"])
+                elif row["class"]:
                     key_point_id_dict["neg_class"].append(row["class"])
-            if len(key_point_id_dict[0]) == 0:
+                    key_point_id_dict["neg"].append(row["argument"])
+                else:
+                    key_point_id_dict["unknown"].append(row["argument"])
+            if len(key_point_id_dict["neg"]) == 0:
                 cnt_neg += 1
-            if len(key_point_id_dict[1]) == 0:
+            if len(key_point_id_dict["pos"]) == 0:
                 cnt_pos += 1
             data.append(key_point_id_dict)
         logger.warning(
