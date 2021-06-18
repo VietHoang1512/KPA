@@ -13,3 +13,5 @@ class DataArguments(BaseDataArguments):
     statement_max_len: Optional[int] = field(
         default=48, metadata={"help": "max sequence length for arguments/key points"}
     )
+    max_pos: Optional[int] = field(default=5, metadata={"help": "maximum positive argument"})
+    max_neg: Optional[int] = field(default=5, metadata={"help": "maximum negative argument"})

@@ -9,6 +9,8 @@ do
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
                 --logging_dir "runs/ranking/fold_$fold_id" \
+                --max_pos 5 \
+                --max_neg 5 \
                 --overwrite_output_dir \
                 --num_train_epochs 15 \
                 --early_stop 5 \
