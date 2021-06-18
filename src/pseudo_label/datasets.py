@@ -1,12 +1,13 @@
 import random
 from typing import Dict, List, Tuple
 
+import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
-from src.ranking.data_argument import DataArguments
+from src.pseudo_label.data_argument import DataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
@@ -53,9 +54,13 @@ class RankingTrainDataset(Dataset):
 
         temp = list(zip(datum["neg"], datum["neg_class"]))
         random.shuffle(temp)
-        datum["neg"], datum["neg_class"] = zip(*temp)
-        datum["neg"] = list(datum["neg"])
-        datum["neg_class"] = list(datum["neg_class"])
+
+        try:
+            datum["neg"], datum["neg_class"] = zip(*temp)
+            datum["neg"] = list(datum["neg"])
+            datum["neg_class"] = list(datum["neg_class"])
+        except ValueError:
+            logger.warning(f'`{datum["key_point"]}` has no negative argument')
 
         n_pos = min(len(datum["pos"]), self.args.max_pos)
         n_neg = min(len(datum["neg"]), self.args.max_neg)
@@ -105,8 +110,9 @@ class RankingTrainDataset(Dataset):
         arg2kp = df[df["label"] == 1].set_index("arg_id")["key_point_id"].map(_extract_id).to_dict()
         df["class"] = df["arg_id"].map(arg2kp).fillna(0)
         data = []
-        cnt_neg = 0
-        cnt_pos = 0
+        cnt_neg = []
+        cnt_pos = []
+        cnt_unknown = []
         for key_point_id, key_point_id_df in df.groupby(["key_point_id"]):
             key_point_id_dict = {"neg": [], "pos": [], "neg_class": [], "unknown": []}
             key_point_id_dict.update(key_point_id_df.iloc[0].to_dict())
@@ -119,13 +125,19 @@ class RankingTrainDataset(Dataset):
                     key_point_id_dict["neg"].append(row["argument"])
                 else:
                     key_point_id_dict["unknown"].append(row["argument"])
-            if len(key_point_id_dict["neg"]) == 0:
-                cnt_neg += 1
-            if len(key_point_id_dict["pos"]) == 0:
-                cnt_pos += 1
+            cnt_neg.append(len(key_point_id_dict["neg"]))
+            cnt_pos.append(len(key_point_id_dict["pos"]))
+            cnt_unknown.append(len(key_point_id_dict["unknown"]))
+
             data.append(key_point_id_dict)
         logger.warning(
-            f"There are {cnt_neg} key points without negative and {cnt_pos} postitive key arguments in total {len(data)}"
+            f"No. negative arguments Mean: {np.mean(cnt_neg):.2f} \u00B1 {np.std(cnt_neg):.2f}  Max: {np.max(cnt_neg)}  Median: {np.median(cnt_neg):.2f}"
+        )
+        logger.warning(
+            f"No. postive arguments Mean: {np.mean(cnt_pos):.2f} \u00B1 {np.std(cnt_pos):.2f}  Max: {np.max(cnt_pos)}  Median: {np.median(cnt_pos):.2f}"
+        )
+        logger.warning(
+            f"No. unknown arguments Mean: {np.mean(cnt_unknown):.2f} \u00B1 {np.std(cnt_unknown):.2f}  Max: {np.max(cnt_unknown)}  Median: {np.median(cnt_unknown):.2f}"
         )
         return data
 

@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_metric_learning import distances, losses
+from pytorch_metric_learning import distances, losses, miners
 from transformers import AutoConfig, AutoModel
 
-from src.baselines.model_argument import ModelArguments
+from src.pseudo_label.model_argument import ModelArguments
 from src.train_utils.distance import SiameseDistanceMetric
 from src.utils.logging import custom_logger
 
@@ -42,11 +42,20 @@ class RankingModel(nn.Module):
         self.fc_stance = nn.Linear(1, self.args.stance_dim)
         if self.args.distance == "cosine":
             self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
-            self.circle_loss = losses.TripletMarginLoss(margin=self.args.margin, distance=distances.CosineSimilarity())
+            self.loss_func = losses.TripletMarginLoss(margin=self.args.margin, distance=distances.CosineSimilarity())
+            self.mining_func = miners.TripletMarginMiner(
+                margin=self.args.margin, distance=distances.CosineSimilarity(), type_of_triplets="semihard"
+            )
         else:
             raise NotImplementedError(
                 f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `consine`"
             )
+
+    def criterion(self, embeddings, labels):
+        # indices_tuple = self.mining_func(embeddings, labels)
+        # loss = self.loss_func(embeddings, labels, indices_tuple)
+        loss = self.loss_func(embeddings, labels)
+        return loss
 
     def _init_weights(self, module: nn.Module):
         if isinstance(module, nn.Linear):
@@ -109,7 +118,7 @@ class RankingModel(nn.Module):
         statement_rep = self.fc_text(statement_rep)
         statements_rep = F.normalize(statement_rep, p=2, dim=1)
 
-        loss = self.circle_loss(statement_rep, label[0])
+        loss = self.criterion(statement_rep, label[0])
 
         similarity = (
             self.args.margin - self.distance_metric(statement_rep[0].view(1, -1), statements_rep[1].view(1, -1))

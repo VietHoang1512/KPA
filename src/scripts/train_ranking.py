@@ -4,10 +4,13 @@ from typing import List
 import torch
 from transformers import AutoTokenizer
 
-from src.ranking.data_argument import DataArguments
-from src.ranking.datasets import RankingInferenceDataset, RankingTrainDataset
-from src.ranking.model_argument import ModelArguments
-from src.ranking.models import RankingModel
+from src.pseudo_label.data_argument import DataArguments
+from src.pseudo_label.datasets import (
+    RankingInferenceDataset,
+    RankingTrainDataset,
+)
+from src.pseudo_label.model_argument import ModelArguments
+from src.pseudo_label.models import RankingModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
 from src.train_utils.training_argument import TrainingArguments
