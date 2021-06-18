@@ -108,12 +108,12 @@ class RankingModel(nn.Module):
         )
         statement_rep = torch.cat([stance_rep, topic_bert_output, statement_bert_output], axis=1)
         statement_rep = self.fc_text(statement_rep)
-
         statements_rep = F.normalize(statement_rep, p=2, dim=1)
 
         loss = self.circle_loss(statement_rep, label[0])
+
         similarity = (
-            self.args.margin - self.distance_metric(statement_rep[0].view(-1, 1), statements_rep[1].view(-1, 1))
+            self.args.margin - self.distance_metric(statement_rep[0].view(1, -1), statements_rep[1].view(1, -1))
         ) / self.args.margin
 
         return loss, similarity
