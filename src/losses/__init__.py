@@ -1,3 +1,4 @@
+from .circle_loss import CircleLoss
 from .contrastive_loss import ContrastiveLoss
 from .cosine_similarity_loss import CosineSimilarityLoss
 from .multiple_negatives_ranking_loss import MultipleNegativesRankingLoss

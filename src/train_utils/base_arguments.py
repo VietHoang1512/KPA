@@ -40,4 +40,3 @@ class BaseModelArguments:
         },
     )
     drop_rate: float = field(default=0.1, metadata={"help": "Model dropout rate."})
-    loss_fct: str = field(default="constrastive", metadata={"help": "Loss function used for training siamese network."})

@@ -150,8 +150,8 @@ class RankingInferenceDataset(Dataset):
 
         stance = torch.tensor([self.stance[idx]], dtype=torch.float)
         label = [0, 0]
-        statements_ecoded = []
 
+        statements_ecoded = []
         for statement in statements:
             statements_ecoded.append(
                 torch.stack(self._tokenize(text=statement, max_len=self.statement_max_len), axis=0)
