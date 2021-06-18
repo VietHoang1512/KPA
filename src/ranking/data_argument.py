@@ -9,4 +9,6 @@ class DataArguments:
 
     directory: Optional[str] = field(default=None, metadata={"help": "The input data folder"})
     max_len: Optional[int] = field(default=36, metadata={"help": "max sequence length for topics and keypoints"})
-    argument_max_len: Optional[int] = field(default=48, metadata={"help": "max sequence length for arguments"})
+    statement_max_len: Optional[int] = field(
+        default=48, metadata={"help": "max sequence length for arguments/key points"}
+    )

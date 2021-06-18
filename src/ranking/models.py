@@ -1,24 +1,18 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from pytorch_metric_learning import distances
+from pytorch_metric_learning.losses import CircleLoss
 from transformers import AutoConfig, AutoModel
 
 from src.baselines.model_argument import ModelArguments
-from src.losses import (
-    ContrastiveLoss,
-    CosineSimilarityLoss,
-    HardNegativeTripletLoss,
-    HardPositiveTripletLoss,
-    OnlineContrastiveLoss,
-    TripletLoss,
-)
 from src.train_utils.distance import SiameseDistanceMetric
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class MixedModel(nn.Module):
+class RankingModel(nn.Module):
     def __init__(self, args: ModelArguments):
         """
         Simple Bert Siamese Model.
@@ -47,55 +41,13 @@ class MixedModel(nn.Module):
             self.args.stance_dim + 2 * self.config.hidden_size * max(self.n_hiddens, 1), self.args.text_dim
         )
         self.fc_stance = nn.Linear(1, self.args.stance_dim)
-
-        if self.args.distance == "euclidean":
-            self.distance_metric = SiameseDistanceMetric.EUCLIDEAN
-        elif self.args.distance == "manhattan":
-            self.distance_metric = SiameseDistanceMetric.MANHATTAN
-        elif self.args.distance == "cosine":
+        if self.args.distance == "cosine":
             self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
+            self.circle_loss = CircleLoss(m=self.args.margin, distance=distances.CosineSimilarity())
         else:
             raise NotImplementedError(
-                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `euclidean`, `manhattan` or `consine`"
+                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `consine`"
             )
-
-        if self.args.sample_selection == "all":
-            self.triplet_loss = TripletLoss(self.distance_metric, triplet_margin=self.args.triplet_margin)
-        elif self.args.sample_selection == "pos":
-            self.triplet_loss = HardPositiveTripletLoss(self.distance_metric, triplet_margin=self.args.triplet_margin)
-        elif self.args.sample_selection == "neg":
-            self.triplet_loss = HardNegativeTripletLoss(self.distance_metric, triplet_margin=self.args.triplet_margin)
-        elif self.args.sample_selection == "both":
-            self.hard_positive_triplet_loss = HardPositiveTripletLoss(
-                self.distance_metric, triplet_margin=self.args.triplet_margin
-            )
-            self.hard_negative_triplet_loss = HardNegativeTripletLoss(
-                self.distance_metric, triplet_margin=self.args.triplet_margin
-            )
-            self.triplet_loss = lambda rep_anchor, rep_pos, rep_neg: self.hard_positive_triplet_loss(
-                rep_anchor, rep_pos, rep_neg
-            ) + self.hard_negative_triplet_loss(rep_anchor, rep_pos, rep_neg)
-        else:
-            raise NotImplementedError(
-                f"Sample selection strategy {self.args.sample_selection} is not implemented yet. Must be `all`, `pos`, `neg` or `both` "
-            )
-
-        if self.args.loss_fct == "constrastive":
-            self.pair_loss = ContrastiveLoss(distance_metric=self.distance_metric, margin=args.pair_margin)
-        elif self.args.loss_fct == "online-constrastive":
-            self.pair_loss = OnlineContrastiveLoss(distance_metric=self.distance_metric, margin=args.pair_margin)
-        elif self.args.loss_fct == "consine":
-            # FIXME
-            logger.warning(f"Provided {self.distance_metric} would be ignored if using cosine similarity loss")
-            self.pair_loss = CosineSimilarityLoss()
-
-        else:
-            raise NotImplementedError(
-                f"Loss function {self.args.loss_fct} is not implemented yet. Must be `constrastive` or `consine`"
-            )
-
-        logger.warning(f"Using {self.args.distance} distance function")
-        logger.warning(f"Using {self.args.loss_fct} loss function")
 
     def _init_weights(self, module: nn.Module):
         if isinstance(module, nn.Linear):
@@ -139,68 +91,29 @@ class MixedModel(nn.Module):
         topic_input_ids,
         topic_attention_mask,
         topic_token_type_ids,
-        pos_key_point_input_ids,
-        pos_key_point_attention_mask,
-        pos_key_point_token_type_ids,
-        neg_key_point_input_ids,
-        neg_key_point_attention_mask,
-        neg_key_point_token_type_ids,
-        argument_input_ids,
-        argument_attention_mask,
-        argument_token_type_ids,
+        statements_ecoded,
         stance,
         label,
     ):
-        stance_rep = self.fc_stance(stance)
-        # stance_rep = self.stance_norm(stance_rep)
 
-        topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
-        argument_bert_output = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
+        n_statements = statements_ecoded[0].shape[0]
 
-        pos_key_point_bert_output = self._forward_text(
-            pos_key_point_input_ids, pos_key_point_attention_mask, pos_key_point_token_type_ids
-        )
-        neg_key_point_bert_output = self._forward_text(
-            neg_key_point_input_ids, neg_key_point_attention_mask, neg_key_point_token_type_ids
+        stance_rep = self.fc_stance(stance).repeat(n_statements, 1)
+        topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids).repeat(
+            n_statements, 1
         )
 
-        argument_rep = torch.cat([stance_rep, topic_bert_output, argument_bert_output], axis=1)
-        argument_rep = self.fc_text(argument_rep)
+        statement_bert_output = self._forward_text(
+            statements_ecoded[0][:, 0], statements_ecoded[0][:, 1], statements_ecoded[0][:, 2]
+        )
+        statement_rep = torch.cat([stance_rep, topic_bert_output, statement_bert_output], axis=1)
+        statement_rep = self.fc_text(statement_rep)
 
-        pos_keypoint_rep = torch.cat([stance_rep, topic_bert_output, pos_key_point_bert_output], axis=1)
-        pos_keypoint_rep = self.fc_text(pos_keypoint_rep)
+        statements_rep = F.normalize(statement_rep, p=2, dim=1)
 
-        neg_keypoint_rep = torch.cat([stance_rep, topic_bert_output, neg_key_point_bert_output], axis=1)
-        neg_keypoint_rep = self.fc_text(neg_keypoint_rep)
-
-        argument_rep = F.normalize(argument_rep, p=2, dim=1)
-        pos_keypoint_rep = F.normalize(pos_keypoint_rep, p=2, dim=1)
-        neg_keypoint_rep = F.normalize(neg_keypoint_rep, p=2, dim=1)
-
-        pos_idx = label == 1
-        neg_idx = label == 0
-        pair_idx = label == 2
-        pos_loss = 0
-        neg_loss = 0
-        triplet_loss = 0
-
-        if pos_idx.sum():
-            pos_loss = self.pair_loss(
-                output1=argument_rep[pos_idx], output2=pos_keypoint_rep[pos_idx], target=label[pos_idx]
-            )
-        if neg_idx.sum():
-            neg_loss = self.pair_loss(
-                output1=argument_rep[neg_idx], output2=neg_keypoint_rep[neg_idx], target=label[neg_idx]
-            )
-        if pair_idx.sum():
-            triplet_loss = self.triplet_loss(
-                rep_anchor=argument_rep[pair_idx],
-                rep_pos=pos_keypoint_rep[pair_idx],
-                rep_neg=neg_keypoint_rep[pair_idx],
-            )
-
-        loss = pos_loss + neg_loss + triplet_loss
+        loss = self.circle_loss(statement_rep, label[0])
         similarity = (
-            self.args.pair_margin - self.distance_metric(argument_rep, pos_keypoint_rep)
-        ) / self.args.pair_margin
+            self.args.margin - self.distance_metric(statement_rep[0].view(-1, 1), statements_rep[1].view(-1, 1))
+        ) / self.args.margin
+
         return loss, similarity
