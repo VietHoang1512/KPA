@@ -17,7 +17,7 @@ def _extract_id(key_point_id: str) -> float:
     return float(key_point_id.split("_")[-1]) + 1
 
 
-class RankingTrainDataset(Dataset):
+class PseudoLabelTrainDataset(Dataset):
     def __init__(
         self,
         df: pd.DataFrame,
@@ -142,7 +142,7 @@ class RankingTrainDataset(Dataset):
         return data
 
 
-class RankingInferenceDataset(Dataset):
+class PseudoLabelInferenceDataset(Dataset):
     def __init__(
         self,
         df: pd.DataFrame,
@@ -232,5 +232,5 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained("roberta-base", use_fast=False)
     data_args = DataArguments
     df = pd.read_csv("train.csv")
-    dataset = RankingTrainDataset(df, tokenizer, data_args)
+    dataset = PseudoLabelTrainDataset(df, tokenizer, data_args)
     print(dataset[2])
