@@ -11,7 +11,7 @@ from src.utils.logging import custom_logger
 logger = custom_logger(__name__)
 
 
-class RankingModel(nn.Module):
+class PseudoLabelModel(nn.Module):
     def __init__(self, args: ModelArguments):
         """
         Simple Bert Siamese Model.
@@ -42,14 +42,18 @@ class RankingModel(nn.Module):
         self.fc_stance = nn.Linear(1, self.args.stance_dim)
         if self.args.distance == "cosine":
             self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
-            self.loss_func = losses.TripletMarginLoss(margin=self.args.margin, distance=distances.CosineSimilarity())
-            self.mining_func = miners.TripletMarginMiner(
-                margin=self.args.margin, distance=distances.CosineSimilarity(), type_of_triplets="semihard"
-            )
+            self.distance = distances.CosineSimilarity()
+        elif self.args.distance == "euclidean":
+            self.distance_metric = SiameseDistanceMetric.EUCLIDEAN
+            self.distance = distances.LpDistance()
         else:
             raise NotImplementedError(
-                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `consine`"
+                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `consine` or `euclidean`"
             )
+        self.loss_func = losses.TripletMarginLoss(margin=self.args.margin, distance=self.distance)
+        self.mining_func = miners.TripletMarginMiner(
+            margin=self.args.margin, distance=self.distance, type_of_triplets="semihard"
+        )
 
     def criterion(self, embeddings, labels):
         # indices_tuple = self.mining_func(embeddings, labels)

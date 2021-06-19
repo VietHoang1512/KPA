@@ -2,13 +2,13 @@ export PYTHONPATH=$PWD
 for fold_id in 1 2 3 4 5 6
 do
         echo "TRAINING ON FOLD $fold_id"
-        python src/scripts/train_ranking.py \
-                --output_dir "outputs/ranking/fold_$fold_id" \
+        python src/scripts/train_pseudo_label.py \
+                --output_dir "outputs/pseudo_label/fold_$fold_id" \
                 --model_name_or_path "roberta-base" \
                 --tokenizer "roberta-base" \
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
-                --logging_dir "runs/ranking/fold_$fold_id" \
+                --logging_dir "runs/pseudo_label/fold_$fold_id" \
                 --max_pos 15 \
                 --max_neg 50 \
                 --max_unknown 5 \
