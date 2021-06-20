@@ -67,7 +67,11 @@ class PseudoLabelTrainDataset(Dataset):
         n_unknown = min(len(datum["unknown"]), self.args.max_unknown)
 
         statements = [datum["key_point"]] + datum["pos"][:n_pos] + datum["neg"][:n_neg] + datum["unknown"][:n_unknown]
-        label = [datum["class"]] * (n_pos + 1) + datum["neg_class"][:n_neg] + list(range(20000, 20000 + n_unknown))
+        label = (
+            [datum["class"]] * (n_pos + 1)
+            + datum["neg_class"][:n_neg]
+            + list(range(self.max_topic, self.max_topic + n_unknown))
+        )
         # print(label)
         topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(text=topic, max_len=self.max_len)
 
@@ -108,7 +112,8 @@ class PseudoLabelTrainDataset(Dataset):
 
     def _process_data(self, df: pd.DataFrame) -> List[Dict]:
         arg2kp = df[df["label"] == 1].set_index("arg_id")["key_point_id"].map(_extract_id).to_dict()
-        df["class"] = df["arg_id"].map(arg2kp).fillna(0)
+        df["class"] = df["arg_id"].map(arg2kp).fillna(0).astype(int)
+        self.max_topic = df["class"].max() + 1
         data = []
         cnt_neg = []
         cnt_pos = []

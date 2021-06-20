@@ -35,9 +35,12 @@ class PseudoLabelModel(nn.Module):
         self.n_hiddens = self.args.n_hiddens
         self.bert_drop = nn.Dropout(self.args.drop_rate)
 
-        # FIXME
-        self.fc_text = nn.Linear(
-            self.args.stance_dim + 2 * self.config.hidden_size * max(self.n_hiddens, 1), self.args.text_dim
+        fusion_dim = args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens
+        self.fc_text = nn.Sequential(
+            nn.BatchNorm1d(fusion_dim),
+            nn.Linear(fusion_dim, args.text_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(args.text_dim, args.text_dim),
         )
         self.fc_stance = nn.Linear(1, self.args.stance_dim)
         if self.args.distance == "cosine":
