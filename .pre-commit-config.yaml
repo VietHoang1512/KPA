@@ -7,7 +7,7 @@ repos:
     rev: 21.5b2
     hooks:
     - id: black
-      language_version: python3.7
+      language_version: python3.8
 -   repo: https://github.com/timothycrosley/isort
     rev: 5.8.0
     hooks:
@@ -26,7 +26,3 @@ repos:
         - --remove-all-unused-imports
         - --ignore-init-module-imports
         - --exclude=tests/*
-# -   repo: git://github.com/FalconSocial/pre-commit-mirrors-pep257
-#     sha: ''  # Use the sha / tag you want to point at
-#     hooks:
-#     -   id: pep257

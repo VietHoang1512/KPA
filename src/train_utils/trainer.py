@@ -143,6 +143,9 @@ class Trainer:
 
         t_total = int(len(train_dataloader) // self.args.gradient_accumulation_steps * self.args.num_train_epochs)
         num_train_epochs = self.args.num_train_epochs
+        if self.args.logging_steps <= 0:
+            self.logger.warning(f"Logging step {self.args.logging_steps} is invalid. Evaluate on epoch end")
+            self.args.logging_step = len(train_dataloader)
 
         optimizer, scheduler = self.get_optimizers(num_training_steps=t_total)
         model = self.model
@@ -201,7 +204,8 @@ class Trainer:
             except ValueError:
                 global_step = 0
                 self.logger.info("  Starting training from scratch")
-
+        else:
+            self.logger.info("  Model path not found, starting training from scratch")
         model.zero_grad()
         train_iterator = range(epochs_trained, int(num_train_epochs))
 
@@ -238,7 +242,7 @@ class Trainer:
 
             logs = dict()
 
-            if self.args.evaluate_during_training:
+            if self.args.evaluate_during_training and global_step % self.args.logging_steps == 0:
                 # logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
                 (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
                     model, val_dataset=self.val_inf_dataset

@@ -36,6 +36,8 @@ class TrainingArguments:
         },
     )
 
+    logging_steps: int = field(default=0, metadata={"help": "Log every X updates steps."})
+
     train_batch_size: int = field(default=32, metadata={"help": "Batch size per GPU/CPU for training."})
     val_batch_size: int = field(default=32, metadata={"help": "Batch size per GPU/CPU for evaluation."})
     gradient_accumulation_steps: int = field(
