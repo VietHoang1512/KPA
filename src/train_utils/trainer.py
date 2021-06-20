@@ -240,26 +240,26 @@ class Trainer:
                     model.zero_grad()
                     global_step += 1
 
-            logs = dict()
+                    logs = dict()
 
-            if self.args.evaluate_during_training and global_step % self.args.logging_steps == 0:
-                # logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
-                (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
-                    model, val_dataset=self.val_inf_dataset
-                )
+                    if self.args.evaluate_during_training and global_step % self.args.logging_steps == 0:
+                        # logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
+                        (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
+                            model, val_dataset=self.val_inf_dataset
+                        )
 
-                for metric, value in logs.items():
-                    self.logger.info(f"{metric} : {value}")
-                self.logger.warning(f"Learning rate reduces to {optimizer.param_groups[0]['lr']}")
+                        for metric, value in logs.items():
+                            self.logger.info(f"{metric} : {value}")
+                        self.logger.warning(f"Learning rate reduces to {optimizer.param_groups[0]['lr']}")
 
-                # Save model checkpoint
-                output_dir = os.path.join(self.args.output_dir, "best_model")
-                os.makedirs(output_dir, exist_ok=True)
-                self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
+                        # Save model checkpoint
+                        output_dir = os.path.join(self.args.output_dir, "best_model")
+                        os.makedirs(output_dir, exist_ok=True)
+                        self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
 
-                if self.es.is_best:
-                    self.logger.info(f"Saved prediction to {output_dir}")
-                    self._save_prediction(prediction=prediction, output_dir=output_dir)
+                        if self.es.is_best:
+                            self.logger.info(f"Saved prediction to {output_dir}")
+                            self._save_prediction(prediction=prediction, output_dir=output_dir)
 
             # Save model after each epoch
             # output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
