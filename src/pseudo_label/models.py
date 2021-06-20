@@ -50,7 +50,11 @@ class PseudoLabelModel(nn.Module):
             raise NotImplementedError(
                 f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `consine` or `euclidean`"
             )
-        self.loss_func = losses.TripletMarginLoss(margin=self.args.margin, distance=self.distance)
+
+        main_loss = losses.TupletMarginLoss(margin=self.args.margin, distance=self.distance)
+        var_loss = losses.IntraPairVarianceLoss(distance=self.distance)
+        self.loss_func = losses.MultipleLosses([main_loss, var_loss], weights=[1, 0.5])
+
         self.mining_func = miners.TripletMarginMiner(
             margin=self.args.margin, distance=self.distance, type_of_triplets="semihard"
         )

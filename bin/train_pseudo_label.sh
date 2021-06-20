@@ -9,6 +9,7 @@ do
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
                 --logging_dir "runs/pseudo_label/fold_$fold_id" \
+                --logging_steps 2 \
                 --max_pos 15 \
                 --max_neg 50 \
                 --max_unknown 5 \
@@ -29,6 +30,6 @@ do
                 --statement_max_len 50 \
                 --stance_dim 32 \
                 --text_dim 256 \
-                --num_workers 1 \
+                --num_workers 4 \
                 --seed 0
 done
