@@ -82,7 +82,6 @@ if __name__ == "__main__":
     train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir=data_args.directory, subset="train")
     val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir=data_args.directory, subset="dev")
 
-    train_inf_df = prepare_inference_data(train_arg_df, train_kp_df)
     val_inf_df = prepare_inference_data(val_arg_df, val_kp_df)
 
     train_topic_word = word_len(train_arg_df["topic"].unique())
@@ -135,21 +134,8 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         args=data_args,
     )
+
     val_dataset = BertSiameseDataset(
-        df=val_df,
-        arg_df=val_arg_df,
-        labels_df=val_labels_df,
-        tokenizer=tokenizer,
-        args=data_args,
-    )
-    train_inf_dataset = BertSiameseDataset(
-        df=train_inf_df,
-        arg_df=train_arg_df,
-        labels_df=train_labels_df,
-        tokenizer=tokenizer,
-        args=data_args,
-    )
-    val_inf_dataset = BertSiameseDataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
@@ -162,8 +148,6 @@ if __name__ == "__main__":
         args=training_args,
         train_dataset=train_dataset,
         val_dataset=val_dataset,
-        train_inf_dataset=train_inf_dataset,
-        val_inf_dataset=val_inf_dataset,
     )
     # Training
     if training_args.do_train:

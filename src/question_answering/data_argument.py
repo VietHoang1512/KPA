@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from src.train_utils.base_arguments import BaseDataArguments
+from src.backbone.base_arguments import BaseDataArguments
 
 
 @dataclass

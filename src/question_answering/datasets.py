@@ -2,17 +2,17 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 import torch
-from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 from transformers.tokenization_utils_base import TruncationStrategy
 
+from src.backbone.base_dataset import BaseDataset
 from src.question_answering.data_argument import DataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class BertQADataset(Dataset):
+class BertQADataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
@@ -31,6 +31,7 @@ class BertQADataset(Dataset):
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
             args (DataArguments): Data Argument
         """
+        super().__init__(tokenizer, args)
         df = df.copy()
         self.df = df
         self.arg_df = arg_df.copy()
@@ -40,10 +41,9 @@ class BertQADataset(Dataset):
         self.key_point = df["key_point"].tolist()
         self.label = df["label"].values
         self.stance = df["stance"].values
-        self.tokenizer = tokenizer
 
-        self.max_topic_length = args.max_topic_length
-        self.max_statement_length = args.max_statement_length
+        self.max_topic_length = self.args.max_topic_length
+        self.max_statement_length = self.args.max_statement_length
 
         self.sequence_pair_added_tokens = self.tokenizer.model_max_length - self.tokenizer.max_len_sentences_pair
         self.truncation = (

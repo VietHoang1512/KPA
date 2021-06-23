@@ -21,11 +21,11 @@ do
                 --learning_rate 0.00003 \
                 --margin 0.5 \
                 --drop_rate 0.1 \
-                --n_hiddens -1 \
+                --n_hiddens 1 \
                 --max_len 30 \
                 --argument_max_len 50 \
                 --stance_dim 32 \
                 --text_dim 256 \
-                --num_workers 2 \
+                --num_workers 4 \
                 --seed 0
 done
