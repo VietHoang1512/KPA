@@ -1,12 +1,12 @@
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
+from src.backbone.base_dataset import BaseDataset
 from src.pseudo_label.data_argument import DataArguments
 from src.utils.logging import custom_logger
 
@@ -17,7 +17,7 @@ def _extract_id(key_point_id: str) -> float:
     return float(key_point_id.split("_")[-1]) + 1
 
 
-class PseudoLabelTrainDataset(Dataset):
+class PseudoLabelTrainDataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
@@ -32,12 +32,8 @@ class PseudoLabelTrainDataset(Dataset):
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
             args (DataArguments): Data Argument
         """
-        df = df.copy()
-        self.data = self._process_data(df)
-        self.tokenizer = tokenizer
-        self.max_len = args.max_len
-        self.statement_max_len = args.statement_max_len
-        self.args = args
+        super().__init__(tokenizer, args)
+        self.data = self._process_data(df.copy())
 
     def __len__(self):
         """Denotes the number of examples per epoch."""
@@ -73,12 +69,14 @@ class PseudoLabelTrainDataset(Dataset):
             + list(range(self.max_topic, self.max_topic + n_unknown))
         )
         # print(label)
-        topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(text=topic, max_len=self.max_len)
+        topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(
+            text=topic, max_len=self.args.max_len
+        )
 
         statements_encoded = []
         for statement in statements:
             statements_encoded.append(
-                torch.stack(self._tokenize(text=statement, max_len=self.statement_max_len), axis=0)
+                torch.stack(self._tokenize(text=statement, max_len=self.args.statement_max_len), axis=0)
             )
 
         sample = {
@@ -91,24 +89,6 @@ class PseudoLabelTrainDataset(Dataset):
         }
 
         return sample
-
-    def _tokenize(self, text: str, max_len: int) -> Tuple[torch.tensor, torch.tensor, torch.tensor]:
-        inputs = self.tokenizer.encode_plus(
-            text,
-            max_length=max_len,
-            padding="max_length",
-            return_token_type_ids=True,
-            truncation=True,
-            return_overflowing_tokens=True,
-        )
-        input_ids = torch.tensor(inputs["input_ids"], dtype=torch.long)
-        attention_mask = torch.tensor(inputs["attention_mask"], dtype=torch.long)
-        token_type_ids = torch.tensor(inputs["token_type_ids"], dtype=torch.long)
-
-        if inputs["num_truncated_tokens"] > 0:
-            logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
-
-        return input_ids, attention_mask, token_type_ids
 
     def _process_data(self, df: pd.DataFrame) -> List[Dict]:
         arg2kp = df[df["label"] == 1].set_index("arg_id")["key_point_id"].map(_extract_id).to_dict()
@@ -147,7 +127,7 @@ class PseudoLabelTrainDataset(Dataset):
         return data
 
 
-class PseudoLabelInferenceDataset(Dataset):
+class PseudoLabelInferenceDataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
@@ -166,6 +146,7 @@ class PseudoLabelInferenceDataset(Dataset):
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
             args (DataArguments): Data Argument
         """
+        super().__init__(tokenizer, args)
         df = df.copy()
         self.df = df
         self.arg_df = arg_df.copy()
@@ -175,9 +156,6 @@ class PseudoLabelInferenceDataset(Dataset):
         self.key_point = df["key_point"].tolist()
         self.label = df["label"].values
         self.stance = df["stance"].values
-        self.tokenizer = tokenizer
-        self.max_len = args.max_len
-        self.statement_max_len = args.statement_max_len
 
     def __len__(self):
         """Denotes the number of examples per epoch."""
@@ -189,53 +167,29 @@ class PseudoLabelInferenceDataset(Dataset):
         argument = self.argument[idx]
         key_point = self.key_point[idx]
 
-        topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(text=topic, max_len=self.max_len)
-        statements = [argument, key_point]
+        topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(
+            text=topic, max_len=self.args.max_len
+        )
+        argument_input_ids, argument_attention_mask, argument_token_type_ids = self._tokenize(
+            text=argument, max_len=self.args.statement_max_len
+        )
+        key_point_input_ids, key_point_attention_mask, key_point_token_type_ids = self._tokenize(
+            text=key_point, max_len=self.args.statement_max_len
+        )
 
         stance = torch.tensor([self.stance[idx]], dtype=torch.float)
-        label = [0, 0]
-
-        statements_encoded = []
-        for statement in statements:
-            statements_encoded.append(
-                torch.stack(self._tokenize(text=statement, max_len=self.statement_max_len), axis=0)
-            )
 
         sample = {
             "topic_input_ids": topic_input_ids,
             "topic_attention_mask": topic_attention_mask,
             "topic_token_type_ids": topic_token_type_ids,
-            "statements_encoded": torch.stack(statements_encoded, axis=0),
+            "argument_input_ids": argument_input_ids,
+            "argument_attention_mask": argument_attention_mask,
+            "argument_token_type_ids": argument_token_type_ids,
+            "key_point_input_ids": key_point_input_ids,
+            "key_point_attention_mask": key_point_attention_mask,
+            "key_point_token_type_ids": key_point_token_type_ids,
             "stance": stance,
-            "label": torch.tensor(label, dtype=torch.float),
         }
 
         return sample
-
-    def _tokenize(self, text: str, max_len: int) -> Tuple[torch.tensor, torch.tensor, torch.tensor]:
-        inputs = self.tokenizer.encode_plus(
-            text,
-            max_length=max_len,
-            padding="max_length",
-            return_token_type_ids=True,
-            truncation=True,
-            return_overflowing_tokens=True,
-        )
-        input_ids = torch.tensor(inputs["input_ids"], dtype=torch.long)
-        attention_mask = torch.tensor(inputs["attention_mask"], dtype=torch.long)
-        token_type_ids = torch.tensor(inputs["token_type_ids"], dtype=torch.long)
-
-        if inputs["num_truncated_tokens"] > 0:
-            logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
-
-        return input_ids, attention_mask, token_type_ids
-
-
-if __name__ == "__main__":
-    from transformers import AutoTokenizer
-
-    tokenizer = AutoTokenizer.from_pretrained("roberta-base", use_fast=False)
-    data_args = DataArguments
-    df = pd.read_csv("train.csv")
-    dataset = PseudoLabelTrainDataset(df, tokenizer, data_args)
-    print(dataset[2])

@@ -17,7 +17,7 @@ do
                 --num_train_epochs 15 \
                 --early_stop 5 \
                 --train_batch_size 1 \
-                --val_batch_size 1 \
+                --val_batch_size 16 \
                 --do_train \
                 --evaluate_during_training \
                 --warmup_steps 0 \

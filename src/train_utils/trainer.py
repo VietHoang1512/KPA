@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from sklearn.metrics import accuracy_score, roc_auc_score
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 from transformers import AdamW, get_linear_schedule_with_warmup
@@ -40,8 +39,6 @@ class Trainer:
         args: TrainingArguments,
         train_dataset: Dataset,
         val_dataset: Dataset,
-        train_inf_dataset: Dataset,
-        val_inf_dataset: Dataset,
         tb_writer: Optional["SummaryWriter"] = None,
         optimizers: Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR] = None,
     ):
@@ -53,8 +50,6 @@ class Trainer:
             args (TrainingArguments): The arguments to tweak for training
             train_dataset (Dataset): The dataset to use for training
             val_dataset (Dataset): The dataset to use for evaluation
-            train_inf_dataset (Dataset): The dataset to use for evaluation with organizer scripts (corresponding to train dataset)
-            val_inf_dataset (Dataset): The dataset to use for evaluation with organizer scripts (corresponding to validation dataset)
             tb_writer (Optional[, optional): [description]. Defaults to None. Tensorboard writer
             optimizers (Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR], optional): [description]. Defaults to None.A tuple
             containing the optimizer and the scheduler to use
@@ -63,8 +58,6 @@ class Trainer:
         self.model = model
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset
-        self.train_inf_dataset = train_inf_dataset
-        self.val_inf_dataset = val_inf_dataset
         self.optimizers = optimizers
         self.es = EarlyStopping(patience=self.args.early_stop, mode="max")
 
@@ -145,7 +138,7 @@ class Trainer:
         num_train_epochs = self.args.num_train_epochs
         if self.args.logging_steps <= 0:
             self.logger.warning(f"Logging step {self.args.logging_steps} is invalid. Evaluate on epoch end")
-            self.args.logging_step = len(train_dataloader)
+            self.args.logging_steps = len(train_dataloader)
 
         optimizer, scheduler = self.get_optimizers(num_training_steps=t_total)
         model = self.model
@@ -241,11 +234,10 @@ class Trainer:
                     global_step += 1
 
                     logs = dict()
-
+                    self.evaluate(model, val_dataset=self.val_dataset)
                     if self.args.evaluate_during_training and global_step % self.args.logging_steps == 0:
-                        # logs["VAL_LOSS"], logs["VAL_AUC"], logs["VAL_ACC"] = self.evaluate(model, display_loss=True)
                         (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
-                            model, val_dataset=self.val_inf_dataset
+                            model, val_dataset=self.val_dataset
                         )
 
                         for metric, value in logs.items():
@@ -295,9 +287,8 @@ class Trainer:
         for k, v in inputs.items():
             inputs[k] = v.to(self.args.device)
 
-        outputs = model(**inputs)
+        loss = model(**inputs)
 
-        loss = outputs[0]
         if self.args.gradient_accumulation_steps > 1:
             loss = loss / self.args.gradient_accumulation_steps
 
@@ -309,34 +300,20 @@ class Trainer:
         self,
         model: nn.Module,
         val_dataset: Optional[Dataset] = None,
-        display_loss: Optional[bool] = False,
     ) -> Dict[str, float]:
 
         val_dataloader = self.get_val_dataloader(val_dataset)
         val_df = val_dataloader.dataset.df.copy()
-        labels = []
         predictions = []
         epoch_iterator = tqdm(val_dataloader, total=len(val_dataloader), position=0, desc="Evaluating")
-        total_val_loss = AverageMeter()
-        for inputs in epoch_iterator:
-            val_loss, prob, label = self._prediction_loop(model, inputs)
-            n_val_samples = len(label)
-            total_val_loss.update(val_loss, n_val_samples)
-            predictions.extend(prob)
-            labels.extend(label)
 
-            if display_loss:
-                epoch_iterator.set_postfix(VAL_LOSS=total_val_loss.avg)
-        labels = np.array(labels)
+        for inputs in epoch_iterator:
+            prob = self._prediction_loop(model, inputs)
+            predictions.extend(prob)
+
         predictions = np.array(predictions)
         val_df["label"] = predictions
-        if not display_loss:
-            return self.calculate_metric(val_df, val_dataloader.dataset.labels_df, val_dataloader.dataset.arg_df)
-        else:
-            auc = roc_auc_score(labels, predictions)
-            predictions = (predictions > 0.5).astype(np.int)
-            acc = accuracy_score(labels, predictions)
-            return total_val_loss.avg, auc, acc
+        return self.calculate_metric(val_df, val_dataloader.dataset.labels_df, val_dataloader.dataset.arg_df)
 
     @classmethod
     def calculate_metric(self, val_df: pd.DataFrame, labels_df: pd.DataFrame, arg_df: pd.DataFrame):
@@ -381,13 +358,11 @@ class Trainer:
 
         model.eval()
         with torch.no_grad():
-            label = inputs["label"].cpu().detach().numpy().tolist()
             for k, v in inputs.items():
                 inputs[k] = v.to(self.args.device)
 
-            outputs = model(**inputs)
+            prob = model(**inputs)
 
-        loss, prob = outputs
         prob = (
             prob.cpu()
             .detach()
@@ -398,7 +373,4 @@ class Trainer:
             .tolist()
         )
 
-        if self.args.gradient_accumulation_steps > 1:
-            loss = loss / self.args.gradient_accumulation_steps
-
-        return loss.item(), prob, label
+        return prob
