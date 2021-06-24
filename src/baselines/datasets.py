@@ -1,35 +1,34 @@
-from typing import List, Tuple
-
 import pandas as pd
 import torch
-from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 
-from src.baselines.data_argument import DataArguments
+from src.backbone.base_dataset import BaseDataset
+from src.baselines.data_argument import BaselineDataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class BertSiameseDataset(Dataset):
+class BaselineBertDataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
         arg_df: pd.DataFrame,
         labels_df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        args: DataArguments,
+        args: BaselineDataArguments,
     ):
         """
-        Bert Keypoint Argument Dataset.
+        Baseline Bert Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
             labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (DataArguments): Data Argument
+            args (BaselineDataArguments): Baseline Data Arguments
         """
+        super().__init__(tokenizer, args)
         df = df.copy()
         self.df = df
         self.arg_df = arg_df.copy()
@@ -39,9 +38,6 @@ class BertSiameseDataset(Dataset):
         self.key_point = df["key_point"].tolist()
         self.label = df["label"].values
         self.stance = df["stance"].values
-        self.tokenizer = tokenizer
-        self.max_len = args.max_len
-        self.argument_max_len = args.argument_max_len
 
     def __len__(self):
         """Denotes the number of examples per epoch."""
@@ -53,46 +49,29 @@ class BertSiameseDataset(Dataset):
         argument = self.argument[idx]
         key_point = self.key_point[idx]
 
-        topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(text=topic, max_len=self.max_len)
+        topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(
+            text=topic, max_len=self.args.max_len
+        )
         key_point_input_ids, key_point_attention_mask, key_point_token_type_ids = self._tokenize(
-            text=key_point, max_len=self.max_len
+            text=key_point, max_len=self.args.max_len
         )
         argument_input_ids, argument_attention_mask, argument_token_type_ids = self._tokenize(
-            text=argument, max_len=self.argument_max_len
+            text=argument, max_len=self.args.argument_max_len
         )
         stance = torch.tensor([self.stance[idx]], dtype=torch.float)
 
         sample = {
-            "topic_input_ids": torch.tensor(topic_input_ids, dtype=torch.long),
-            "topic_attention_mask": torch.tensor(topic_attention_mask, dtype=torch.long),
-            "topic_token_type_ids": torch.tensor(topic_token_type_ids, dtype=torch.long),
-            "key_point_input_ids": torch.tensor(key_point_input_ids, dtype=torch.long),
-            "key_point_attention_mask": torch.tensor(key_point_attention_mask, dtype=torch.long),
-            "key_point_token_type_ids": torch.tensor(key_point_token_type_ids, dtype=torch.long),
-            "argument_input_ids": torch.tensor(argument_input_ids, dtype=torch.long),
-            "argument_attention_mask": torch.tensor(argument_attention_mask, dtype=torch.long),
-            "argument_token_type_ids": torch.tensor(argument_token_type_ids, dtype=torch.long),
+            "topic_input_ids": topic_input_ids,
+            "topic_attention_mask": topic_attention_mask,
+            "topic_token_type_ids": topic_token_type_ids,
+            "key_point_input_ids": key_point_input_ids,
+            "key_point_attention_mask": key_point_attention_mask,
+            "key_point_token_type_ids": key_point_token_type_ids,
+            "argument_input_ids": argument_input_ids,
+            "argument_attention_mask": argument_attention_mask,
+            "argument_token_type_ids": argument_token_type_ids,
             "stance": stance,
             "label": torch.tensor(self.label[idx], dtype=torch.float),
         }
 
         return sample
-
-    def _tokenize(self, text: str, max_len: int) -> Tuple[List[int], List[int], List[int]]:
-        inputs = self.tokenizer.encode_plus(
-            text,
-            # add_special_tokens=True,
-            max_length=max_len,
-            padding="max_length",
-            return_token_type_ids=True,
-            truncation=True,
-            return_overflowing_tokens=True,
-        )
-        input_ids = inputs["input_ids"]
-        attention_mask = inputs["attention_mask"]
-        token_type_ids = inputs["token_type_ids"]
-
-        if inputs["num_truncated_tokens"] > 0:
-            logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
-
-        return input_ids, attention_mask, token_type_ids

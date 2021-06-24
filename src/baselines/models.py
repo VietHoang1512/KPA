@@ -1,76 +1,29 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoConfig, AutoModel
+from transformers import AutoConfig
 
-from src.baselines.model_argument import ModelArguments
+from src.backbone.base_model import BaseModel
+from src.baselines.model_argument import BaselineModelArguments
 from src.losses import (
     ContrastiveLoss,
     CosineSimilarityLoss,
     OnlineContrastiveLoss,
 )
-from src.train_utils.distance import SiameseDistanceMetric
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class BertSiameseModel(nn.Module):
-    def __init__(self, args: ModelArguments):
+class BaselineBertModel(BaseModel):
+    def __init__(self, args: BaselineModelArguments):
         """
         Simple Bert Siamese Model.
 
         Args:
-            args (ModelArguments): Bert Model Argument
+            args (BaselineModelArguments): Baseline Model Arguments
         """
-        super().__init__()
-        self.args = args
-        self.config = AutoConfig.from_pretrained(
-            self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name,
-            cache_dir=self.args.cache_dir if self.args.cache_dir else None,
-            from_tf=False,
-            output_hidden_states=True,
-            return_dict=True,
-        )
-        self.bert_model = AutoModel.from_pretrained(
-            self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name, config=self.config
-        )
-        self.model_type = type(self.bert_model).__name__.replace("Model", "").lower()
-        self.n_hiddens = self.args.n_hiddens
-        self.bert_drop = nn.Dropout(self.args.drop_rate)
-
-        # self.stance_norm = nn.LayerNorm(args.stance_dim)
-        # self.text_norm = nn.LayerNorm(self.config.hidden_size * self.n_hiddens)
-
-        # FIXME
-        # self.fc_text = AttentionHead(self.args.stance_dim + 2 * self.config.hidden_size
-        #                              * self.n_hiddens, self.args.text_dim, self.args.text_dim)
-        self.fc_text = nn.Linear(
-            self.args.stance_dim + 2 * self.config.hidden_size * max(self.n_hiddens, 1), self.args.text_dim
-        )
-        self.fc_stance = nn.Linear(1, self.args.stance_dim)
-
-        # self.fc_text = nn.Sequential(
-        #     nn.Linear(args.stance_dim + 2 * self.config.hidden_size * self.n_hiddens, args.text_dim),
-        #     nn.ReLU(inplace=True),
-        #     nn.Linear(args.text_dim, args.text_dim),
-        # )
-        # self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True), nn.Linear(args.stance_dim, args.stance_dim))
-
-        # self._init_weights(self.text_norm)
-        # self._init_weights(self.fc_text)
-        # self._init_weights(self.fc_stance)
-
-        if self.args.distance == "euclidean":
-            self.distance_metric = SiameseDistanceMetric.EUCLIDEAN
-        elif self.args.distance == "manhattan":
-            self.distance_metric = SiameseDistanceMetric.MANHATTAN
-        elif self.args.distance == "cosine":
-            self.distance_metric = SiameseDistanceMetric.COSINE_DISTANCE
-        else:
-            raise NotImplementedError(
-                f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `euclidean`, `manhattan` or `consine`"
-            )
+        super().__init__(args)
 
         if self.args.loss_fct == "constrastive":
             self.criterion = ContrastiveLoss(distance_metric=self.distance_metric, margin=args.margin)
@@ -86,62 +39,23 @@ class BertSiameseModel(nn.Module):
                 f"Loss function {self.args.loss_fct} is not implemented yet. Must be `constrastive` or `consine`"
             )
 
-        logger.warning(f"Using {self.args.distance} distance function")
         logger.warning(f"Using {self.args.loss_fct} loss function")
-
-    def _init_weights(self, module: nn.Module):
-        if isinstance(module, nn.Linear):
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
-            if module.bias is not None:
-                module.bias.data.zero_()
-        elif isinstance(module, nn.Embedding):
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
-            if module.padding_idx is not None:
-                module.weight.data[module.padding_idx].zero_()
-        elif isinstance(module, nn.LayerNorm):
-            module.bias.data.zero_()
-            module.weight.data.fill_(1.0)
-
-    def _forward_text(self, input_ids, attention_mask, token_type_ids):
-        if self.model_type in ["distilbert", "electra", "bart", "xlm", "xlnet", "camembert", "longformer"]:
-            output = self.bert_model(input_ids, attention_mask=attention_mask)
-        else:
-            output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        if self.n_hiddens > 0:
-            hidden_states_key = "hidden_states"
-            if self.model_type == "bart":
-                hidden_states_key = "decoder_hidden_states"
-
-            if self.model_type == "xlnet" and (not self.training):
-                # FIXME: XLnet behaves differenctly between train-eval
-                output = torch.cat(
-                    [torch.transpose(output[hidden_states_key][-i], 0, 1)[:, 0, :] for i in range(self.n_hiddens)],
-                    axis=-1,
-                )
-            else:
-                output = torch.cat([output[hidden_states_key][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
-        else:
-            output = output["last_hidden_state"][:, 0, :]
-        # output = self.text_norm(output)
-        output = self.bert_drop(output)
-        return output
 
     def forward(
         self,
-        topic_input_ids,
-        topic_attention_mask,
-        topic_token_type_ids,
-        key_point_input_ids,
-        key_point_attention_mask,
-        key_point_token_type_ids,
-        argument_input_ids,
-        argument_attention_mask,
-        argument_token_type_ids,
-        stance,
-        label,
+        topic_input_ids: torch.Tensor,
+        topic_attention_mask: torch.Tensor,
+        topic_token_type_ids: torch.Tensor,
+        key_point_input_ids: torch.Tensor,
+        key_point_attention_mask: torch.Tensor,
+        key_point_token_type_ids: torch.Tensor,
+        argument_input_ids: torch.Tensor,
+        argument_attention_mask: torch.Tensor,
+        argument_token_type_ids: torch.Tensor,
+        stance: torch.Tensor,
+        label: torch.Tensor,
     ):
         stance_rep = self.fc_stance(stance)
-        # stance_rep = self.stance_norm(stance_rep)
 
         topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
         key_point_bert_output = self._forward_text(
@@ -154,34 +68,33 @@ class BertSiameseModel(nn.Module):
         keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
         keypoint_rep = self.fc_text(keypoint_rep)
 
-        argument_rep = F.normalize(argument_rep, p=2, dim=1)
-        keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
+        if self.args.normalize:
+            argument_rep = F.normalize(argument_rep, p=2, dim=1)
+            keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
 
-        loss = self.criterion(output1=argument_rep, output2=keypoint_rep, target=label)
+        if self.training:
+            loss = self.criterion(output1=argument_rep, output2=keypoint_rep, target=label)
+            return loss
 
-        similarity = F.relu(self.args.margin - self.distance_metric(argument_rep, keypoint_rep)) / self.args.margin
-        return loss, similarity
+        similarity = (self.args.margin - self.distance_metric(argument_rep, keypoint_rep)) / self.args.margin
+        return similarity
 
 
-class BertKPAClassificationModel(nn.Module):
-    def __init__(self, args: ModelArguments):
+class BertKPAClassificationModel(BaseModel):
+    def __init__(self, args: BaselineModelArguments):
         """
         Simple Bert Classification Model.
 
         Args:
-            args (ModelArguments): Bert Model Argument
+            args (BaselineModelArguments): Bert Model Argument
         """
-        super().__init__()
+        super().__init__(args)
 
         config = AutoConfig.from_pretrained(
             args.model_name,
             from_tf=False,
             output_hidden_states=True,
         )
-        self.args = args
-        self.bert_model = AutoModel.from_pretrained(args.model_name, config=config)
-        self.n_hiddens = args.n_hiddens
-        self.bert_drop = nn.Dropout(args.drop_rate)
 
         self.fc = nn.Sequential(
             nn.Linear(args.stance_dim + 3 * config.hidden_size * self.n_hiddens, 1), nn.ReLU(inplace=True)
@@ -193,25 +106,19 @@ class BertKPAClassificationModel(nn.Module):
         label = label.view(-1, 1)
         return nn.BCELoss()(preds, label)
 
-    def _forward_text(self, input_ids, attention_mask, token_type_ids):
-        output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        output = torch.cat([output[2][-i][:, 0, :] for i in range(self.n_hiddens)], axis=-1)
-        output = self.bert_drop(output)
-        return output
-
     def forward(
         self,
-        topic_input_ids,
-        topic_attention_mask,
-        topic_token_type_ids,
-        key_point_input_ids,
-        key_point_attention_mask,
-        key_point_token_type_ids,
-        argument_input_ids,
-        argument_attention_mask,
-        argument_token_type_ids,
-        stance,
-        label,
+        topic_input_ids: torch.Tensor,
+        topic_attention_mask: torch.Tensor,
+        topic_token_type_ids: torch.Tensor,
+        key_point_input_ids: torch.Tensor,
+        key_point_attention_mask: torch.Tensor,
+        key_point_token_type_ids: torch.Tensor,
+        argument_input_ids: torch.Tensor,
+        argument_attention_mask: torch.Tensor,
+        argument_token_type_ids: torch.Tensor,
+        stance: torch.Tensor,
+        label: torch.Tensor,
     ):
         stance_ouput = self.fc_stance(stance)
         topic_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)

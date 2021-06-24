@@ -4,10 +4,13 @@ from typing import List
 import torch
 from transformers import AutoTokenizer
 
-from src.mixed.data_argument import MixedDataArguments
-from src.mixed.datasets import MixedInferenceDataset, MixedTrainDataset
-from src.mixed.model_argument import MixedModelArguments
-from src.mixed.models import MixedModel
+from src.pseudo_label.data_argument import PseudoLabelDataArguments
+from src.pseudo_label.datasets import (
+    PseudoLabelInferenceDataset,
+    PseudoLabelTrainDataset,
+)
+from src.pseudo_label.model_argument import PseudoLabelModelArguments
+from src.pseudo_label.models import PseudoLabelModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
 from src.train_utils.training_argument import TrainingArguments
@@ -46,7 +49,7 @@ if __name__ == "__main__":
 
     print_signature()
 
-    parser = HfArgumentParser((MixedModelArguments, MixedDataArguments, TrainingArguments))
+    parser = HfArgumentParser((PseudoLabelModelArguments, PseudoLabelDataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if (
@@ -75,7 +78,7 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer"
         )
 
-    model = MixedModel(args=model_args)
+    model = PseudoLabelModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
     logger.info(f"Number of parameters: {count_parameters(model)}")
 
@@ -89,25 +92,27 @@ if __name__ == "__main__":
     train_df.to_csv("train.csv", index=False)
     val_df.to_csv("val.csv", index=False)
 
-    train_dataset = MixedTrainDataset(
+    train_dataset = PseudoLabelTrainDataset(
         df=train_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_dataset = MixedInferenceDataset(
+    val_dataset = PseudoLabelInferenceDataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    test_dataset = MixedInferenceDataset(
+
+    test_dataset = PseudoLabelInferenceDataset(
         df=test_inf_df,
         arg_df=test_arg_df,
         labels_df=test_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
+
     trainer = Trainer(
         model=model,
         args=training_args,
