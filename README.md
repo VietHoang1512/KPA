@@ -13,7 +13,7 @@
 ## TODO:
 
 ### Pair-wise keypoint-argument
-Given a pair of key point and argument (along with their supported topic & stance) along with their matching score. Similar pairs with label 1 are pulled together, or pushed away otherwise.
+Given a pair of key point and argument (along with their supported topic & stance) and their matching score. Similar pairs with label 1 are pulled together, or pushed away otherwise.
 
 #### Model
 
@@ -38,12 +38,12 @@ Given a pair of key point and argument (along with their supported topic & stanc
 
 ### Pseudo-label
 
-Group the arguments by their key point and consider the order of that key point within the topic as their labels ( see [pseudo_label](src/pseudo_label) ). For now we can used available pytorch metrics learning losses, miners or reducers from this great [open-source](https://github.com/KevinMusgrave/pytorch-metric-learning) in the main training workflow
+Group the arguments by their key point and consider the order of that key point within the topic as their labels (see [pseudo_label](src/pseudo_label)). For now we can used available pytorch metrics learning losses, miners or reducers from this great [open-source](https://github.com/KevinMusgrave/pytorch-metric-learning) in the main training workflow.
 
 ### Utils
 
 - [x] K-folds
-- [ ] Full-flow
+- [x] Full-flow
 
 ## Acknowledgements
 
