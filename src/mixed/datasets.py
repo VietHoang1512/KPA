@@ -20,12 +20,12 @@ class MixedTrainDataset(BaseDataset):
         args: MixedDataArguments,
     ):
         """
-        Bert Keypoint Argument Dataset.
+        Mixed Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (DataArguments): Data Argument
+            args (MixedDataArguments): Mixed Data Argument
         """
         super().__init__(tokenizer, args)
         df = df.copy()
@@ -120,14 +120,14 @@ class MixedInferenceDataset(BaseDataset):
         args: MixedDataArguments,
     ):
         """
-        Bert Keypoint Argument Dataset.
+        Mixed Inference Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
             labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (DataArguments): Data Argument
+            args (MixedDataArguments): Mixed Data Argument
         """
         super().__init__(tokenizer, args)
         df = df.copy()

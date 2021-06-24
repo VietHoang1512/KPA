@@ -21,12 +21,12 @@ class TripletDataset(BaseDataset):
         args: TripletDataArguments,
     ):
         """
-        Bert Keypoint Argument Dataset.
+        Triplet Bert Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (DataArguments): Data Argument
+            args (TripletDataArguments): Triplet Data Argument
         """
         super().__init__(tokenizer, args)
         self.data = self._process_data(df.copy())
@@ -115,14 +115,14 @@ class TripletInferenceDataset(BaseDataset):
         args: TripletDataArguments,
     ):
         """
-        Bert Keypoint Argument Dataset.
+        Triplet Inference Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
             labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (DataArguments): Data Argument
+            args (TripletDataArguments): Triplet Data Argument
         """
         super().__init__(tokenizer, args)
         df = df.copy()

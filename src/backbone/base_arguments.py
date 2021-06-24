@@ -5,7 +5,7 @@ from typing import Optional
 @dataclass
 class BaseDataArguments:
 
-    """Arguments pertaining to what data we are going to input our model for training and eval."""
+    """Base Arguments pertaining to what data we are going to input our model for training and eval."""
 
     directory: Optional[str] = field(default=None, metadata={"help": "The input data folder"})
     test_directory: Optional[str] = field(default=None, metadata={"help": "The test data folder"})
@@ -14,8 +14,7 @@ class BaseDataArguments:
 @dataclass
 class BaseModelArguments:
 
-    """Arguments pertaining to which model/config/tokenizer we are going to
-    fine-tune, or train from scratch."""
+    """Base Model Arguments pertaining to which model/config/tokenizer we are going to fine-tune, or train from scratch."""
 
     model_name_or_path: Optional[str] = field(
         default=None,

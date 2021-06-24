@@ -20,7 +20,7 @@ class QABertModel(BaseModel):
         Bert Question Answering like Model.
 
         Args:
-            args (ModelArguments): Bert Model Argument
+            args (QAModelArguments): Question Answering Model Argument
         """
         super().__init__(args)
 

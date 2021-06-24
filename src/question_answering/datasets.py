@@ -22,7 +22,7 @@ class QADataset(BaseDataset):
         args: QADataArguments,
     ):
         """
-        Bert Keypoint Argument Dataset.
+        Bert Question Answering Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame

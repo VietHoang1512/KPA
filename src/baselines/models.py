@@ -21,7 +21,7 @@ class BaselineBertModel(BaseModel):
         Simple Bert Siamese Model.
 
         Args:
-            args (ModelArguments): Bert Model Argument
+            args (BaselineModelArguments): Baseline Model Arguments
         """
         super().__init__(args)
 

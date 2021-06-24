@@ -19,14 +19,14 @@ class BaselineBertDataset(BaseDataset):
         args: BaselineDataArguments,
     ):
         """
-        Bert Keypoint Argument Dataset.
+        Baseline Bert Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
             labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (DataArguments): Data Argument
+            args (BaselineDataArguments): Baseline Data Arguments
         """
         super().__init__(tokenizer, args)
         df = df.copy()
