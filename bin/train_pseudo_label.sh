@@ -4,8 +4,8 @@ do
         echo "TRAINING ON FOLD $fold_id"
         python src/scripts/train_pseudo_label.py \
                 --output_dir "outputs/pseudo_label/fold_$fold_id" \
-                --model_name_or_path "xlnet-base-cased" \
-                --tokenizer "xlnet-base-cased" \
+                --model_name_or_path "roberta-base" \
+                --tokenizer "roberta-base" \
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
                 --test_directory "kpm_6_folds/test/" \

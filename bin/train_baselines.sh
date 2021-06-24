@@ -9,6 +9,7 @@ do
                 --distance "euclidean" \
                 --normalize \
                 --directory "kpm_6_folds/fold_$fold_id" \
+                --test_directory "kpm_6_folds/test" \
                 --logging_dir "runs/baselines/fold_$fold_id" \
                 --overwrite_output_dir \
                 --num_train_epochs 15 \

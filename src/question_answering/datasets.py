@@ -142,11 +142,6 @@ class QADataset(BaseDataset):
             return_overflowing_tokens=True,
         )
         if (
-            len(encoded_key_point.get("overflow_to_sample_mapping", [])) > 0
-            or len(encoded_argument.get("overflow_to_sample_mapping", [])) > 0
-        ):
-            logger.warning(f"String is truncated with maximum length {max_length}")
-        if (
             len(encoded_key_point.get("overflowing_tokens", [])) > 0
             or len(encoded_argument.get("overflowing_tokens", [])) > 0
         ):
