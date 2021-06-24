@@ -81,8 +81,13 @@ if __name__ == "__main__":
 
     train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir=data_args.directory, subset="train")
     val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir=data_args.directory, subset="dev")
+    test_df, test_arg_df, test_kp_df, test_labels_df = get_data(gold_data_dir=data_args.test_directory, subset="test")
 
     val_inf_df = prepare_inference_data(val_arg_df, val_kp_df)
+    test_inf_df = prepare_inference_data(test_arg_df, test_kp_df)
+
+    train_df.to_csv("train.csv", index=False)
+    val_df.to_csv("val.csv", index=False)
 
     train_topic_word = word_len(train_arg_df["topic"].unique())
     train_argument_word = word_len(train_arg_df["argument"])
@@ -143,6 +148,14 @@ if __name__ == "__main__":
         args=data_args,
     )
 
+    test_dataset = BaselineBertDataset(
+        df=test_inf_df,
+        arg_df=test_arg_df,
+        labels_df=test_labels_df,
+        tokenizer=tokenizer,
+        args=data_args,
+    )
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -157,3 +170,5 @@ if __name__ == "__main__":
             else None
         )
         trainer.train(model_path=model_path)
+    if training_args.do_inference:
+        trainer.inference(test_dataset)

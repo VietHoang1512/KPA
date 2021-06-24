@@ -9,6 +9,7 @@ do
                 --sample_selection "both" \
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
+                --test_directory "kpm_6_folds/test/" \
                 --logging_dir "runs/triplet/fold_$fold_id" \
                 --overwrite_output_dir \
                 --num_train_epochs 15 \

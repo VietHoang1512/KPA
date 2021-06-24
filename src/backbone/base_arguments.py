@@ -8,6 +8,7 @@ class BaseDataArguments:
     """Arguments pertaining to what data we are going to input our model for training and eval."""
 
     directory: Optional[str] = field(default=None, metadata={"help": "The input data folder"})
+    test_directory: Optional[str] = field(default=None, metadata={"help": "The test data folder"})
 
 
 @dataclass
