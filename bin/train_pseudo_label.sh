@@ -8,6 +8,7 @@ do
                 --tokenizer "roberta-base" \
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
+                --test_directory "kpm_6_folds/test/" \
                 --logging_dir "runs/pseudo_label/fold_$fold_id" \
                 --logging_steps 2 \
                 --max_pos 15 \

@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 from typing import Dict, Optional, Tuple
@@ -269,9 +270,6 @@ class Trainer:
                 self.logger.warning("Early stopping")
                 break
 
-        if self.args.do_inference:
-            # TODO: inference
-            pass
         if self.tb_writer:
             self.tb_writer.close()
 
@@ -280,6 +278,37 @@ class Trainer:
             os.makedirs(output_dir, exist_ok=True)
             self.logger.info("Saving model checkpoint to %s", output_dir)
             self.es(0, model, optimizer, scheduler, output_dir)
+
+    def inference(self, test_dataset: Dataset, output_dir: str = None):
+
+        output_dir = output_dir if output_dir is not None else self.args.output_dir
+
+        model_paths = glob.glob(self.args.output_dir + "/**/best_model/model.pt", recursive=True)
+        predictions = []
+        for fp in model_paths:
+            model = self.load_model(self.model, fp)
+            _, prediction = self.evaluate(model, val_dataset=test_dataset)
+            predictions.append(prediction)
+        if not predictions:
+            self.logger.warning("No best model found")
+            return
+        final = self.ensemble(predictions)
+        self._save_prediction(final, output_dir)
+
+    def ensemble(self, predictions):
+        total = len(predictions)
+        final = predictions[0]
+        self.logger.info(f"Ensemble on {total} predictions")
+        for prediction in predictions[1:]:
+            for arg_id, kps in prediction.items():
+                for kp_id, score in kps.items():
+                    final[arg_id][kp_id] += score
+        return final
+
+    def load_model(self, model: nn.Module, file_path: str):
+        model.load_state_dict(torch.load(file_path))
+        self.logger.info(f"Loaded model from {file_path}")
+        return model
 
     def _training_step(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
         model.train()
@@ -330,7 +359,7 @@ class Trainer:
             arg.append(arg_id)
             kp.append(best_kp[0])
             scores.append(best_kp[1])
-        print(f"loaded predictions for {len(arg)} arguments")
+        self.logger.info(f"loaded predictions for {len(arg)} arguments")
 
         predictions_df = pd.DataFrame({"arg_id": arg, "key_point_id": kp, "score": scores})
         # make sure each arg_id has a prediction
