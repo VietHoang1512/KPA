@@ -4,10 +4,10 @@ from typing import List
 import torch
 from transformers import AutoTokenizer
 
-from src.baselines.data_argument import DataArguments
-from src.baselines.datasets import BertSiameseDataset
-from src.baselines.model_argument import ModelArguments
-from src.baselines.models import BertSiameseModel
+from src.baselines.data_argument import BaselineDataArguments
+from src.baselines.datasets import BaselineBertDataset
+from src.baselines.model_argument import BaselineModelArguments
+from src.baselines.models import BaselineBertModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
 from src.train_utils.training_argument import TrainingArguments
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     print_signature()
 
-    parser = HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
+    parser = HfArgumentParser((BaselineModelArguments, BaselineDataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if (
@@ -75,15 +75,19 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer"
         )
 
-    model = BertSiameseModel(args=model_args)
+    model = BaselineBertModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
     logger.info(f"Number of parameters: {count_parameters(model)}")
 
     train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir=data_args.directory, subset="train")
     val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir=data_args.directory, subset="dev")
+    test_df, test_arg_df, test_kp_df, test_labels_df = get_data(gold_data_dir=data_args.test_directory, subset="test")
 
-    train_inf_df = prepare_inference_data(train_arg_df, train_kp_df)
     val_inf_df = prepare_inference_data(val_arg_df, val_kp_df)
+    test_inf_df = prepare_inference_data(test_arg_df, test_kp_df)
+
+    train_df.to_csv("train.csv", index=False)
+    val_df.to_csv("val.csv", index=False)
 
     train_topic_word = word_len(train_arg_df["topic"].unique())
     train_argument_word = word_len(train_arg_df["argument"])
@@ -128,31 +132,26 @@ if __name__ == "__main__":
     train_df.to_csv("train.csv", index=False)
     val_df.to_csv("val.csv", index=False)
 
-    train_dataset = BertSiameseDataset(
+    train_dataset = BaselineBertDataset(
         df=train_df,
         arg_df=train_arg_df,
         labels_df=train_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_dataset = BertSiameseDataset(
-        df=val_df,
-        arg_df=val_arg_df,
-        labels_df=val_labels_df,
-        tokenizer=tokenizer,
-        args=data_args,
-    )
-    train_inf_dataset = BertSiameseDataset(
-        df=train_inf_df,
-        arg_df=train_arg_df,
-        labels_df=train_labels_df,
-        tokenizer=tokenizer,
-        args=data_args,
-    )
-    val_inf_dataset = BertSiameseDataset(
+
+    val_dataset = BaselineBertDataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
+        tokenizer=tokenizer,
+        args=data_args,
+    )
+
+    test_dataset = BaselineBertDataset(
+        df=test_inf_df,
+        arg_df=test_arg_df,
+        labels_df=test_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
@@ -162,8 +161,6 @@ if __name__ == "__main__":
         args=training_args,
         train_dataset=train_dataset,
         val_dataset=val_dataset,
-        train_inf_dataset=train_inf_dataset,
-        val_inf_dataset=val_inf_dataset,
     )
     # Training
     if training_args.do_train:
@@ -173,3 +170,5 @@ if __name__ == "__main__":
             else None
         )
         trainer.train(model_path=model_path)
+    if training_args.do_inference:
+        trainer.inference(test_dataset)

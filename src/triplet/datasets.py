@@ -1,35 +1,35 @@
 import random
 from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 import torch
 from transformers import PreTrainedTokenizer
 
 from src.backbone.base_dataset import BaseDataset
-from src.mixed.data_argument import MixedDataArguments
+from src.triplet.data_argument import TripletDataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class MixedTrainDataset(BaseDataset):
+class TripletDataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        args: MixedDataArguments,
+        args: TripletDataArguments,
     ):
         """
-        Mixed Dataset.
+        Triplet Bert Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (MixedDataArguments): Mixed Data Argument
+            args (TripletDataArguments): Triplet Data Argument
         """
         super().__init__(tokenizer, args)
-        df = df.copy()
-        self.data = self._process_data(df)
+        self.data = self._process_data(df.copy())
 
     def __len__(self):
         """Denotes the number of examples per epoch."""
@@ -41,93 +41,88 @@ class MixedTrainDataset(BaseDataset):
 
         stance = torch.tensor([datum["stance"]], dtype=torch.float)
         topic = datum["topic"]
-        argument = datum["argument"]
-
-        label = 2  # this sample has both negative and positive key point
-        if len(datum[0]):
-            neg_key_point = random.choice(datum[0])
-        else:
-            label = 1
-            neg_key_point = "this sample doesnt contain negative keypoint"
-
-        if len(datum[1]):
-            pos_key_point = random.choice(datum[1])
-        else:
-            label = 0
-            pos_key_point = "this sample doesnt contain positive keypoint"
-
+        key_point = datum["key_point"]
+        pos_argument = random.choice(datum["pos"])
+        neg_argument = random.choice(datum["neg"])
         topic_input_ids, topic_attention_mask, topic_token_type_ids = self._tokenize(
             text=topic, max_len=self.args.max_len
         )
-
-        argument_input_ids, argument_attention_mask, argument_token_type_ids = self._tokenize(
-            text=argument, max_len=self.args.argument_max_len
+        key_point_input_ids, key_point_attention_mask, key_point_token_type_ids = self._tokenize(
+            text=key_point, max_len=self.args.max_len
+        )
+        pos_argument_input_ids, pos_argument_attention_mask, pos_argument_token_type_ids = self._tokenize(
+            text=pos_argument, max_len=self.args.argument_max_len
         )
 
-        pos_key_point_input_ids, pos_key_point_attention_mask, pos_key_point_token_type_ids = self._tokenize(
-            text=pos_key_point, max_len=self.args.max_len
-        )
-        neg_key_point_input_ids, neg_key_point_attention_mask, neg_key_point_token_type_ids = self._tokenize(
-            text=neg_key_point, max_len=self.args.max_len
+        neg_argument_input_ids, neg_argument_attention_mask, neg_argument_token_type_ids = self._tokenize(
+            text=neg_argument, max_len=self.args.argument_max_len
         )
 
         sample = {
             "topic_input_ids": topic_input_ids,
             "topic_attention_mask": topic_attention_mask,
             "topic_token_type_ids": topic_token_type_ids,
-            "pos_key_point_input_ids": pos_key_point_input_ids,
-            "pos_key_point_attention_mask": pos_key_point_attention_mask,
-            "pos_key_point_token_type_ids": pos_key_point_token_type_ids,
-            "neg_key_point_input_ids": neg_key_point_input_ids,
-            "neg_key_point_attention_mask": neg_key_point_attention_mask,
-            "neg_key_point_token_type_ids": neg_key_point_token_type_ids,
-            "argument_input_ids": argument_input_ids,
-            "argument_attention_mask": argument_attention_mask,
-            "argument_token_type_ids": argument_token_type_ids,
+            "key_point_input_ids": key_point_input_ids,
+            "key_point_attention_mask": key_point_attention_mask,
+            "key_point_token_type_ids": key_point_token_type_ids,
+            "pos_argument_input_ids": pos_argument_input_ids,
+            "pos_argument_attention_mask": pos_argument_attention_mask,
+            "pos_argument_token_type_ids": pos_argument_token_type_ids,
+            "neg_argument_input_ids": neg_argument_input_ids,
+            "neg_argument_attention_mask": neg_argument_attention_mask,
+            "neg_argument_token_type_ids": neg_argument_token_type_ids,
             "stance": stance,
-            "label": torch.tensor(label, dtype=torch.float),
         }
 
         return sample
 
     def _process_data(self, df: pd.DataFrame) -> List[Dict]:
+
         data = []
-        cnt_neg = 0
-        cnt_pos = 0
-        for _, arg_id_df in df.groupby(["arg_id"]):
-            arg_id_dict = {0: [], 1: []}
-            arg_id_dict.update(arg_id_df.iloc[0].to_dict())
-            for _, row in arg_id_df.iterrows():
-                arg_id_dict[row["label"]].append(row["key_point"])
-            if len(arg_id_dict[0]) == 0:
-                cnt_neg += 1
-            if len(arg_id_dict[1]) == 0:
-                cnt_pos += 1
-            data.append(arg_id_dict)
+        cnt_neg = []
+        cnt_pos = []
+
+        for _, key_point_id_df in df.groupby(["key_point_id"]):
+            key_point_id_dict = {"neg": [], "pos": []}
+            key_point_id_dict.update(key_point_id_df.iloc[0].to_dict())
+            for _, row in key_point_id_df.iterrows():
+                if row["label"] == 1:
+                    key_point_id_dict["pos"].append(row["argument"])
+                else:
+                    key_point_id_dict["neg"].append(row["argument"])
+            n_pos = len(key_point_id_dict["pos"])
+            n_neg = len(key_point_id_dict["neg"])
+            cnt_neg.append(n_neg)
+            cnt_pos.append(n_pos)
+            if n_neg * n_pos:
+                data.append(key_point_id_dict)
         logger.warning(
-            f"There are {cnt_neg} arguments without negative and {cnt_pos} postitive key points in total {len(data)}"
+            f"No. negative arguments Mean: {np.mean(cnt_neg):.2f} \u00B1 {np.std(cnt_neg):.2f}  Max: {np.max(cnt_neg)}  Median: {np.median(cnt_neg):.2f}"
+        )
+        logger.warning(
+            f"No. postive arguments Mean: {np.mean(cnt_pos):.2f} \u00B1 {np.std(cnt_pos):.2f}  Max: {np.max(cnt_pos)}  Median: {np.median(cnt_pos):.2f}"
         )
         return data
 
 
-class MixedInferenceDataset(BaseDataset):
+class TripletInferenceDataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
         arg_df: pd.DataFrame,
         labels_df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        args: MixedDataArguments,
+        args: TripletDataArguments,
     ):
         """
-        Mixed Inference Dataset.
+        Triplet Inference Dataset.
 
         Args:
             df (pd.DataFrame): Argument-keypoint pairs data frame
             arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
             labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (MixedDataArguments): Mixed Data Argument
+            args (TripletDataArguments): Triplet Data Argument
         """
         super().__init__(tokenizer, args)
         df = df.copy()
@@ -166,17 +161,16 @@ class MixedInferenceDataset(BaseDataset):
             "topic_input_ids": topic_input_ids,
             "topic_attention_mask": topic_attention_mask,
             "topic_token_type_ids": topic_token_type_ids,
-            "pos_key_point_input_ids": key_point_input_ids,
-            "pos_key_point_attention_mask": key_point_attention_mask,
-            "pos_key_point_token_type_ids": key_point_token_type_ids,
-            "neg_key_point_input_ids": key_point_input_ids,
-            "neg_key_point_attention_mask": key_point_attention_mask,
-            "neg_key_point_token_type_ids": key_point_token_type_ids,
-            "argument_input_ids": argument_input_ids,
-            "argument_attention_mask": argument_attention_mask,
-            "argument_token_type_ids": argument_token_type_ids,
+            "pos_argument_input_ids": argument_input_ids,
+            "pos_argument_attention_mask": argument_attention_mask,
+            "pos_argument_token_type_ids": argument_token_type_ids,
+            "neg_argument_input_ids": argument_input_ids,
+            "neg_argument_attention_mask": argument_attention_mask,
+            "neg_argument_token_type_ids": argument_token_type_ids,
+            "key_point_input_ids": key_point_input_ids,
+            "key_point_attention_mask": key_point_attention_mask,
+            "key_point_token_type_ids": key_point_token_type_ids,
             "stance": stance,
-            "label": torch.tensor(self.label[idx], dtype=torch.float),
         }
 
         return sample

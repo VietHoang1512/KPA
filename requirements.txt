@@ -10,3 +10,4 @@ transformers
 tensorboardX
 datasets
 accelerate
+pytorch-metric-learning

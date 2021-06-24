@@ -1,16 +1,15 @@
 import os
-from typing import List
 
 import torch
 from transformers import AutoTokenizer
 
-from src.mixed.data_argument import MixedDataArguments
-from src.mixed.datasets import MixedInferenceDataset, MixedTrainDataset
-from src.mixed.model_argument import MixedModelArguments
-from src.mixed.models import MixedModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
 from src.train_utils.training_argument import TrainingArguments
+from src.triplet.data_argument import TripletDataArguments
+from src.triplet.datasets import TripletDataset, TripletInferenceDataset
+from src.triplet.model_argument import TripletModelArguments
+from src.triplet.models import TripletModel
 from src.utils.data import get_data, prepare_inference_data
 from src.utils.hf_argparser import HfArgumentParser
 from src.utils.logging import custom_logger
@@ -21,32 +20,11 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = custom_logger(__name__)
 
 
-def word_len(texts: List[str]) -> List:
-    def _word_len(text: str, separator=" ") -> int:
-        return len(text.split(separator))
-
-    return list(map(_word_len, texts))
-
-
-def char_len(texts: List[str]) -> List:
-    def _char_len(text: str) -> int:
-        return len(text)
-
-    return list(map(_char_len, texts))
-
-
-def token_len(texts: List[str], tokenizer: AutoTokenizer) -> List:
-    def _token_len(text: str) -> int:
-        return len(tokenizer.encode(text))
-
-    return list(map(_token_len, texts))
-
-
 if __name__ == "__main__":
 
     print_signature()
 
-    parser = HfArgumentParser((MixedModelArguments, MixedDataArguments, TrainingArguments))
+    parser = HfArgumentParser((TripletModelArguments, TripletDataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if (
@@ -75,7 +53,7 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer"
         )
 
-    model = MixedModel(args=model_args)
+    model = TripletModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
     logger.info(f"Number of parameters: {count_parameters(model)}")
 
@@ -89,31 +67,34 @@ if __name__ == "__main__":
     train_df.to_csv("train.csv", index=False)
     val_df.to_csv("val.csv", index=False)
 
-    train_dataset = MixedTrainDataset(
+    train_dataset = TripletDataset(
         df=train_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_dataset = MixedInferenceDataset(
+    val_dataset = TripletInferenceDataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    test_dataset = MixedInferenceDataset(
+
+    test_dataset = TripletInferenceDataset(
         df=test_inf_df,
         arg_df=test_arg_df,
         labels_df=test_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
+
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         val_dataset=val_dataset,
     )
+
     # Training
     if training_args.do_train:
         model_path = (
