@@ -35,9 +35,10 @@ class BaseDataset(Dataset):
         attention_mask = torch.tensor(inputs["attention_mask"], dtype=torch.long)
         token_type_ids = torch.tensor(inputs["token_type_ids"], dtype=torch.long)
 
-        if len(inputs["overflowing_tokens"]) > 0:
+        if len(inputs.get("overflow_to_sample_mapping", [])) > 0:
             logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
-
+        if len(inputs.get("overflowing_tokens", [])) > 0:
+            logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
         return input_ids, attention_mask, token_type_ids
 
     def _process_data(self, df: pd.DataFrame) -> List[Dict]:
