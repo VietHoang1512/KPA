@@ -100,9 +100,10 @@ class MixedModel(BaseModel):
         neg_keypoint_rep = torch.cat([stance_rep, topic_bert_output, neg_key_point_bert_output], axis=1)
         neg_keypoint_rep = self.fc_text(neg_keypoint_rep)
 
-        argument_rep = F.normalize(argument_rep, p=2, dim=1)
-        pos_keypoint_rep = F.normalize(pos_keypoint_rep, p=2, dim=1)
-        neg_keypoint_rep = F.normalize(neg_keypoint_rep, p=2, dim=1)
+        if self.args.normalize:
+            argument_rep = F.normalize(argument_rep, p=2, dim=1)
+            pos_keypoint_rep = F.normalize(pos_keypoint_rep, p=2, dim=1)
+            neg_keypoint_rep = F.normalize(neg_keypoint_rep, p=2, dim=1)
 
         if self.training:
             pos_idx = label == 1

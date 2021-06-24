@@ -69,9 +69,9 @@ class PseudoLabelModel(BaseModel):
             )
 
             statement_rep = torch.cat([stance_rep, topic_bert_output, statement_bert_output], axis=1)
-
             statement_rep = self.fc_text(statement_rep)
-            statement_rep = F.normalize(statement_rep, p=2, dim=1)
+            if self.args.normalize:
+                statement_rep = F.normalize(statement_rep, p=2, dim=1)
 
             loss = self.criterion(statement_rep, label[0])
 
@@ -90,9 +90,9 @@ class PseudoLabelModel(BaseModel):
             argument_rep = self.fc_text(argument_rep)
             keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
             keypoint_rep = self.fc_text(keypoint_rep)
-
-            argument_rep = F.normalize(argument_rep, p=2, dim=1)
-            keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
+            if self.args.normalize:
+                argument_rep = F.normalize(argument_rep, p=2, dim=1)
+                keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
             similarity = (self.args.margin - self.distance_metric(argument_rep, keypoint_rep)) / self.args.margin
 
         return similarity

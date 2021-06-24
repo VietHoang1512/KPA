@@ -25,4 +25,3 @@ repos:
         - --remove-unused-variables
         - --remove-all-unused-imports
         - --ignore-init-module-imports
-        - --exclude=tests/*

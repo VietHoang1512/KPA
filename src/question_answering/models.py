@@ -68,9 +68,9 @@ class QABertModel(BaseModel):
         argument_rep = self.fc_text(argument_rep)
         keypoint_rep = torch.cat([stance_rep, key_point_bert_output], axis=1)
         keypoint_rep = self.fc_text(keypoint_rep)
-
-        argument_rep = F.normalize(argument_rep, p=2, dim=1)
-        keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
+        if self.args.normalize:
+            argument_rep = F.normalize(argument_rep, p=2, dim=1)
+            keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
 
         if self.training:
             loss = self.criterion(output1=argument_rep, output2=keypoint_rep, target=label)
