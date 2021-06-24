@@ -86,9 +86,10 @@ class TripletModel(BaseModel):
         keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
         keypoint_rep = self.fc_text(keypoint_rep)
 
-        keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
-        pos_argument_rep = F.normalize(pos_argument_rep, p=2, dim=1)
-        neg_argument_rep = F.normalize(neg_argument_rep, p=2, dim=1)
+        if self.args.normalize:
+            keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)
+            pos_argument_rep = F.normalize(pos_argument_rep, p=2, dim=1)
+            neg_argument_rep = F.normalize(neg_argument_rep, p=2, dim=1)
 
         if self.training:
 

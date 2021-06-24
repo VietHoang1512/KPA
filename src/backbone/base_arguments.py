@@ -55,3 +55,5 @@ class BaseModelArguments:
     distance: str = field(
         default="euclidean", metadata={"help": "Function that returns a distance between two emeddings."}
     )
+
+    normalize: bool = field(default=False, metadata={"help": "Whether to normalize the embedding vectors or not."})

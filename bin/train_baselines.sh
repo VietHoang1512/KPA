@@ -7,6 +7,7 @@ do
                 --tokenizer "roberta-base" \
                 --loss_fct "online-constrastive" \
                 --distance "euclidean" \
+                --normalize \
                 --directory "kpm_6_folds/fold_$fold_id" \
                 --logging_dir "runs/baselines/fold_$fold_id" \
                 --overwrite_output_dir \
