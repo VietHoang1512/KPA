@@ -5,7 +5,7 @@ from src.backbone.base_arguments import BaseDataArguments
 
 
 @dataclass
-class DataArguments(BaseDataArguments):
+class PseudoLabelDataArguments(BaseDataArguments):
 
     """Arguments pertaining to what data we are going to input our model for training and eval."""
 

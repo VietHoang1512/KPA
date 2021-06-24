@@ -8,14 +8,14 @@ from src.losses import (
     CosineSimilarityLoss,
     OnlineContrastiveLoss,
 )
-from src.question_answering.model_argument import ModelArguments
+from src.question_answering.model_argument import QAModelArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class BertQAModel(BaseModel):
-    def __init__(self, args: ModelArguments):
+class QABertModel(BaseModel):
+    def __init__(self, args: QAModelArguments):
         """
         Bert Question Answering like Model.
 

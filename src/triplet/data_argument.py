@@ -5,7 +5,7 @@ from src.backbone.base_arguments import BaseDataArguments
 
 
 @dataclass
-class MixedDataArguments(BaseDataArguments):
+class TripletDataArguments(BaseDataArguments):
 
     """Arguments pertaining to what data we are going to input our model for training and eval."""
 

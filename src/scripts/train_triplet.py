@@ -3,13 +3,13 @@ import os
 import torch
 from transformers import AutoTokenizer
 
-from src.question_answering.data_argument import QADataArguments
-from src.question_answering.datasets import QADataset
-from src.question_answering.model_argument import QAModelArguments
-from src.question_answering.models import QABertModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
 from src.train_utils.training_argument import TrainingArguments
+from src.triplet.data_argument import TripletDataArguments
+from src.triplet.datasets import TripletDataset, TripletInferenceDataset
+from src.triplet.model_argument import TripletModelArguments
+from src.triplet.models import TripletModel
 from src.utils.data import get_data, prepare_inference_data
 from src.utils.hf_argparser import HfArgumentParser
 from src.utils.logging import custom_logger
@@ -19,11 +19,12 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 logger = custom_logger(__name__)
 
+
 if __name__ == "__main__":
 
     print_signature()
 
-    parser = HfArgumentParser((QAModelArguments, QADataArguments, TrainingArguments))
+    parser = HfArgumentParser((TripletModelArguments, TripletDataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if (
@@ -52,26 +53,25 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer"
         )
 
-    model = QABertModel(args=model_args)
+    model = TripletModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
     logger.info(f"Number of parameters: {count_parameters(model)}")
 
     train_df, train_arg_df, train_kp_df, train_labels_df = get_data(gold_data_dir=data_args.directory, subset="train")
     val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir=data_args.directory, subset="dev")
 
+    train_inf_df = prepare_inference_data(train_arg_df, train_kp_df)
     val_inf_df = prepare_inference_data(val_arg_df, val_kp_df)
 
     train_df.to_csv("train.csv", index=False)
     val_df.to_csv("val.csv", index=False)
 
-    train_dataset = QADataset(
+    train_dataset = TripletDataset(
         df=train_df,
-        arg_df=train_arg_df,
-        labels_df=train_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
-    val_dataset = QADataset(
+    val_dataset = TripletInferenceDataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,

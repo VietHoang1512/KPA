@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from transformers import AutoConfig
 
 from src.backbone.base_model import BaseModel
-from src.baselines.model_argument import ModelArguments
+from src.baselines.model_argument import BaselineModelArguments
 from src.losses import (
     ContrastiveLoss,
     CosineSimilarityLoss,
@@ -15,8 +15,8 @@ from src.utils.logging import custom_logger
 logger = custom_logger(__name__)
 
 
-class BertSiameseModel(BaseModel):
-    def __init__(self, args: ModelArguments):
+class BaselineBertModel(BaseModel):
+    def __init__(self, args: BaselineModelArguments):
         """
         Simple Bert Siamese Model.
 
@@ -80,12 +80,12 @@ class BertSiameseModel(BaseModel):
 
 
 class BertKPAClassificationModel(BaseModel):
-    def __init__(self, args: ModelArguments):
+    def __init__(self, args: BaselineModelArguments):
         """
         Simple Bert Classification Model.
 
         Args:
-            args (ModelArguments): Bert Model Argument
+            args (BaselineModelArguments): Bert Model Argument
         """
         super().__init__(args)
 

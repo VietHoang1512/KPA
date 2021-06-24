@@ -1,8 +1,8 @@
 import torch
 from transformers import AutoTokenizer
 
-from src.baselines.model_argument import ModelArguments
-from src.baselines.models import BertSiameseModel
+from src.baselines.model_argument import BaselineModelArguments
+from src.baselines.models import BaselineBertModel
 
 if __name__ == "__main__":
 
@@ -10,11 +10,11 @@ if __name__ == "__main__":
     BATCH_SIZE = 8
     MAXLEN = 16
 
-    model_argument = ModelArguments
+    model_argument = BaselineModelArguments
     model_argument.model_name_or_path = BERT_MODEL
 
     tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL)
-    model = BertSiameseModel(args=model_argument)
+    model = BaselineBertModel(args=model_argument)
 
     topics = [
         "Argument mining  is a young and gradually maturing research area within computational linguistics"
@@ -47,7 +47,8 @@ if __name__ == "__main__":
     key_points_attention_mask = torch.tensor(key_points_encoded["attention_mask"], dtype=torch.long)
     key_points_token_type_ids = torch.tensor(key_points_encoded["token_type_ids"], dtype=torch.long)
 
-    loss, prob = model(
+    model.eval()
+    prob = model(
         topics_input_ids,
         topics_attention_mask,
         topics_token_type_ids,

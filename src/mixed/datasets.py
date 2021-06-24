@@ -6,7 +6,7 @@ import torch
 from transformers import PreTrainedTokenizer
 
 from src.backbone.base_dataset import BaseDataset
-from src.baselines.data_argument import DataArguments
+from src.mixed.data_argument import MixedDataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
@@ -17,7 +17,7 @@ class MixedTrainDataset(BaseDataset):
         self,
         df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        args: DataArguments,
+        args: MixedDataArguments,
     ):
         """
         Bert Keypoint Argument Dataset.
@@ -117,7 +117,7 @@ class MixedInferenceDataset(BaseDataset):
         arg_df: pd.DataFrame,
         labels_df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        args: DataArguments,
+        args: MixedDataArguments,
     ):
         """
         Bert Keypoint Argument Dataset.

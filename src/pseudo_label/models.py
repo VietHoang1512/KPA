@@ -5,19 +5,19 @@ import torch.nn.functional as F
 from pytorch_metric_learning import distances, losses, miners
 
 from src.backbone.base_model import BaseModel
-from src.pseudo_label.model_argument import ModelArguments
+from src.pseudo_label.model_argument import PseudoLabelModelArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
 class PseudoLabelModel(BaseModel):
-    def __init__(self, args: ModelArguments):
+    def __init__(self, args: PseudoLabelModelArguments):
         """
         Pseudo Label Model.
 
         Args:
-            args (ModelArguments): Pseudo Label Model Argument
+            args (PseudoLabelModelArguments): Pseudo Label Model Argument
         """
         super().__init__(args)
 

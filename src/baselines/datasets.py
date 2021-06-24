@@ -3,20 +3,20 @@ import torch
 from transformers import PreTrainedTokenizer
 
 from src.backbone.base_dataset import BaseDataset
-from src.baselines.data_argument import DataArguments
+from src.baselines.data_argument import BaselineDataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class BertSiameseDataset(BaseDataset):
+class BaselineBertDataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
         arg_df: pd.DataFrame,
         labels_df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        args: DataArguments,
+        args: BaselineDataArguments,
     ):
         """
         Bert Keypoint Argument Dataset.

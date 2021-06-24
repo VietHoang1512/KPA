@@ -6,20 +6,20 @@ from transformers import PreTrainedTokenizer
 from transformers.tokenization_utils_base import TruncationStrategy
 
 from src.backbone.base_dataset import BaseDataset
-from src.question_answering.data_argument import DataArguments
+from src.question_answering.data_argument import QADataArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class BertQADataset(BaseDataset):
+class QADataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
         arg_df: pd.DataFrame,
         labels_df: pd.DataFrame,
         tokenizer: PreTrainedTokenizer,
-        args: DataArguments,
+        args: QADataArguments,
     ):
         """
         Bert Keypoint Argument Dataset.
@@ -29,7 +29,7 @@ class BertQADataset(BaseDataset):
             arg_df (pd.DataFrame): DataFrame for all arguments (Used for inference)
             labels_df (pd.DataFrame): DataFrame for labels (Used for inference)
             tokenizer (PreTrainedTokenizer): Pretrained Bert Tokenizer
-            args (DataArguments): Data Argument
+            args (QADataArguments): Data Argument
         """
         super().__init__(tokenizer, args)
         df = df.copy()
@@ -141,7 +141,7 @@ class BertQADataset(BaseDataset):
             return_token_type_ids=True,
             return_overflowing_tokens=True,
         )
-        if encoded_key_point["num_truncated_tokens"] > 0 or encoded_argument["num_truncated_tokens"] > 0:
+        if len(encoded_key_point["overflowing_tokens"]) > 0 or len(encoded_argument["overflowing_tokens"]) > 0:
             logger.warning(f"String is truncated with maximum length {max_length}")
 
         return encoded_key_point, encoded_argument
