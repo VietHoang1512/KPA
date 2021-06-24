@@ -252,6 +252,12 @@ class Trainer:
                         if self.es.is_best:
                             self.logger.info(f"Saved prediction to {output_dir}")
                             self._save_prediction(prediction=prediction, output_dir=output_dir)
+                if self.es.early_stop:
+                    self.logger.warning("Early stopping")
+                    break
+            else:
+                continue  # only executed if the inner loop did NOT break
+            break
 
             # Save model after each epoch
             # output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
@@ -265,10 +271,6 @@ class Trainer:
             if self.tb_writer:
                 for k, v in logs.items():
                     self.tb_writer.add_scalar(k, v, epoch)
-
-            if self.es.early_stop:
-                self.logger.warning("Early stopping")
-                break
 
         if self.tb_writer:
             self.tb_writer.close()
@@ -307,7 +309,7 @@ class Trainer:
 
     def load_model(self, model: nn.Module, file_path: str):
         model.load_state_dict(torch.load(file_path))
-        self.logger.info(f"Loaded model from {file_path}")
+        print(f"Loaded model from {file_path}")
         return model
 
     def _training_step(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:

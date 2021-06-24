@@ -33,12 +33,12 @@ class PseudoLabelModel(BaseModel):
         main_loss = losses.TupletMarginLoss(margin=self.args.margin, distance=self.distance)
         var_loss = losses.IntraPairVarianceLoss(distance=self.distance)
         self.loss_func = losses.MultipleLosses([main_loss, var_loss], weights=[1, 0.5])
-        self.mining_func = miners.MultiSimilarityMiner(epsilon=0.1, distance=self.distance)
+        self.mining_func = miners.MultiSimilarityMiner(epsilon=0.2, distance=self.distance)
 
     def criterion(self, embeddings, labels):
-        # indices_tuple = self.mining_func(embeddings, labels)
-        # loss = self.loss_func(embeddings, labels, indices_tuple)
-        loss = self.loss_func(embeddings, labels)
+        indices_tuple = self.mining_func(embeddings, labels)
+        loss = self.loss_func(embeddings, labels, indices_tuple)
+        # loss = self.loss_func(embeddings, labels)
         return loss
 
     def forward(
