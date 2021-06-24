@@ -3,8 +3,8 @@ for fold_id in 1 2 3 4 5 6
 do
         python src/scripts/train_qa.py \
                 --output_dir "outputs/qa/fold_$fold_id" \
-                --model_name_or_path "roberta-base" \
-                --tokenizer "roberta-base" \
+                --model_name_or_path "distilbert-base-uncased" \
+                --tokenizer "distilbert-base-uncased" \
                 --loss_fct "online-constrastive" \
                 --distance "cosine" \
                 --directory "kpm_6_folds/fold_$fold_id" \
