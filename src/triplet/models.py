@@ -18,7 +18,7 @@ logger = custom_logger(__name__)
 class TripletModel(BaseModel):
     def __init__(self, args: TripletModelArguments):
         """
-        Pseudo Label Model.
+        Triplet Model.
 
         Args:
             args (TripletModelArguments): Triplet Model Argument

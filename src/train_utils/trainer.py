@@ -361,7 +361,7 @@ class Trainer:
             arg.append(arg_id)
             kp.append(best_kp[0])
             scores.append(best_kp[1])
-        self.logger.info(f"loaded predictions for {len(arg)} arguments")
+        print(f"loaded predictions for {len(arg)} arguments")
 
         predictions_df = pd.DataFrame({"arg_id": arg, "key_point_id": kp, "score": scores})
         # make sure each arg_id has a prediction
