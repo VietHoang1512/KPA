@@ -15,6 +15,7 @@ class BaseDataset(Dataset):
     def __init__(self, tokenizer: PreTrainedTokenizer, args: BaseDataArguments):
         self.tokenizer = tokenizer
         self.args = args
+        self.tokenizer_type = type(tokenizer).__name__.lower().replace("tokenizer", "").replace("fast", "")
 
     def __len__(self):
         raise NotImplementedError
@@ -35,9 +36,10 @@ class BaseDataset(Dataset):
         attention_mask = torch.tensor(inputs["attention_mask"], dtype=torch.long)
         token_type_ids = torch.tensor(inputs["token_type_ids"], dtype=torch.long)
 
-        input_ids = torch.squeeze(input_ids)
-        attention_mask = torch.squeeze(attention_mask)
-        token_type_ids = torch.squeeze(token_type_ids)
+        if self.tokenizer_type in ["xlnet"]:
+            input_ids = torch.squeeze(input_ids, 1)
+            attention_mask = torch.squeeze(attention_mask, 1)
+            token_type_ids = torch.squeeze(token_type_ids, 1)
 
         if len(inputs.get("overflowing_tokens", [])) > 0:
             logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
