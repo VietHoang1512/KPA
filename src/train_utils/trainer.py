@@ -310,6 +310,7 @@ class Trainer:
     def load_model(self, model: nn.Module, file_path: str):
         model.load_state_dict(torch.load(file_path))
         print(f"Loaded model from {file_path}")
+        model.to(self.args.device)
         return model
 
     def _training_step(self, model: nn.Module, inputs: Dict[str, torch.Tensor]) -> float:
