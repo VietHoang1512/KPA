@@ -35,7 +35,7 @@ class BaseDataset(Dataset):
         attention_mask = torch.tensor(inputs["attention_mask"], dtype=torch.long)
         token_type_ids = torch.tensor(inputs["token_type_ids"], dtype=torch.long)
 
-        if inputs["num_truncated_tokens"] > 0:
+        if len(inputs["overflowing_tokens"]) > 0:
             logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
 
         return input_ids, attention_mask, token_type_ids

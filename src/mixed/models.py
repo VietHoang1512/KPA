@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 
 from src.backbone.base_model import BaseModel
-from src.baselines.model_argument import ModelArguments
 from src.losses import (
     ContrastiveLoss,
     CosineSimilarityLoss,
@@ -11,18 +10,19 @@ from src.losses import (
     OnlineContrastiveLoss,
     TripletLoss,
 )
+from src.mixed.model_argument import MixedModelArguments
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
 class MixedModel(BaseModel):
-    def __init__(self, args: ModelArguments):
+    def __init__(self, args: MixedModelArguments):
         """
         Mixed loss model.
 
         Args:
-            args (ModelArguments): Mixed Model Argument
+            args (MixedModelArguments): Mixed Model Argument
         """
         super().__init__(args)
 

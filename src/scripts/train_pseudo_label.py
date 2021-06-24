@@ -4,12 +4,12 @@ from typing import List
 import torch
 from transformers import AutoTokenizer
 
-from src.pseudo_label.data_argument import DataArguments
+from src.pseudo_label.data_argument import PseudoLabelDataArguments
 from src.pseudo_label.datasets import (
     PseudoLabelInferenceDataset,
     PseudoLabelTrainDataset,
 )
-from src.pseudo_label.model_argument import ModelArguments
+from src.pseudo_label.model_argument import PseudoLabelModelArguments
 from src.pseudo_label.models import PseudoLabelModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     print_signature()
 
-    parser = HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
+    parser = HfArgumentParser((PseudoLabelModelArguments, PseudoLabelDataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if (

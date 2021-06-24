@@ -234,7 +234,6 @@ class Trainer:
                     global_step += 1
 
                     logs = dict()
-                    self.evaluate(model, val_dataset=self.val_dataset)
                     if self.args.evaluate_during_training and global_step % self.args.logging_steps == 0:
                         (logs["mAP_strict"], logs["mAP_relaxed"]), prediction = self.evaluate(
                             model, val_dataset=self.val_dataset

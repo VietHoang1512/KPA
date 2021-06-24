@@ -4,9 +4,9 @@ from typing import List
 import torch
 from transformers import AutoTokenizer
 
-from src.mixed.data_argument import DataArguments
+from src.mixed.data_argument import MixedDataArguments
 from src.mixed.datasets import MixedInferenceDataset, MixedTrainDataset
-from src.mixed.model_argument import ModelArguments
+from src.mixed.model_argument import MixedModelArguments
 from src.mixed.models import MixedModel
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     print_signature()
 
-    parser = HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
+    parser = HfArgumentParser((MixedModelArguments, MixedDataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if (

@@ -4,7 +4,7 @@ from src.backbone.base_arguments import BaseModelArguments
 
 
 @dataclass
-class ModelArguments(BaseModelArguments):
+class QAModelArguments(BaseModelArguments):
 
     """Arguments pertaining to which model/config/tokenizer we are going to
     fine- tune, or train from scratch."""
