@@ -247,7 +247,7 @@ class Trainer:
                         # Save model checkpoint
                         output_dir = os.path.join(self.args.output_dir, "best_model")
                         os.makedirs(output_dir, exist_ok=True)
-                        self.es(logs["mAP_strict"], model, optimizer, scheduler, output_dir)
+                        self.es((logs["mAP_strict"] + logs["mAP_relaxed"]) / 2, model, optimizer, scheduler, output_dir)
 
                         if self.es.is_best:
                             self.logger.info(f"Saved prediction to {output_dir}")
@@ -382,6 +382,7 @@ class Trainer:
 
     @classmethod
     def _save_prediction(self, prediction, output_dir):
+        print("Saving prediction to", output_dir)
         with open(os.path.join(output_dir, "predictions.p"), "w") as f:
             json.dump(prediction, f, indent=4)
 
