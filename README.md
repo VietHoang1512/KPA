@@ -40,6 +40,8 @@ Given a pair of key point and argument (along with their supported topic & stanc
 
 Group the arguments by their key point and consider the order of that key point within the topic as their labels (see [pseudo_label](src/pseudo_label)). For now we can used available pytorch metrics learning losses, miners or reducers from this great [open-source](https://github.com/KevinMusgrave/pytorch-metric-learning) in the main training workflow.
 
+![Model architecture](assets/model.png "Model architecture")
+
 ### Utils
 
 - [x] K-folds
