@@ -63,7 +63,11 @@ class BaseModel(nn.Module):
             module.weight.data.fill_(1.0)
 
     def _forward_text(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, token_type_ids: torch.Tensor):
-        if self.model_type in ["distilbert", "electra", "bart", "xlm", "xlnet", "camembert", "longformer"]:
+        if self.model_type in ["xlnet"]:
+            input_ids = torch.squeeze(input_ids, 1)
+            attention_mask = torch.squeeze(attention_mask, 1)
+            token_type_ids = torch.squeeze(token_type_ids, 1)
+        if self.model_type in ["t5", "distilbert", "electra", "bart", "xlm", "xlnet", "camembert", "longformer"]:
             output = self.bert_model(input_ids, attention_mask=attention_mask)
         else:
             output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
