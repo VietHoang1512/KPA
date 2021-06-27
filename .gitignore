@@ -4,6 +4,7 @@
 **.logs 
 runs/
 tmp/
+predict/
 
 # data
 **/data
@@ -12,7 +13,7 @@ kpm_data
 IBM_Debater
 quora
 kpm_6_folds
-assets
+# assets
 # stuff
 # .flake8
 # .isort.cfg
@@ -149,9 +150,7 @@ debug/
 
 # data/
 .idea/
-*.png
 *.jpg
-*.PNG
 *.JPEG
 *.JPG
 *.PDF
