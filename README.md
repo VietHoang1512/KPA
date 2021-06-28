@@ -1,6 +1,6 @@
 <div align="center">
 
-# [🏅Quantitative Summarization – Key Point Analysis🏅](https://competitions.codalab.org/competitions/31166)
+# 🏅[Quantitative Summarization – Key Point Analysis](https://competitions.codalab.org/competitions/31166)🏅
 
 [![CircleCI](https://circleci.com/gh/VietHoang1512/KPA.svg?style=svg&circle-token=a196c015fd323b139ee617a2ebd36b9055dee3a2)](https://circleci.com/gh/VietHoang1512/KPA/tree/main)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)

@@ -38,11 +38,11 @@ if __name__ == "__main__":
         )
     os.makedirs(training_args.output_dir, exist_ok=True)
     with open(os.path.join(training_args.output_dir, "model.yaml"), "w") as f:
-        yaml.dump(vars(model_args), f, indent=2)
+        yaml.dump(vars(model_args), f, indent=2, default_flow_style=False)
     with open(os.path.join(training_args.output_dir, "data.yaml"), "w") as f:
-        yaml.dump(vars(data_args), f, indent=2)
+        yaml.dump(vars(data_args), f, indent=2, default_flow_style=False)
     with open(os.path.join(training_args.output_dir, "training.yaml"), "w") as f:
-        yaml.dump(vars(training_args), f, indent=2)
+        yaml.dump(vars(training_args), f, indent=2, default_flow_style=False)
     if torch.cuda.device_count() >= 1:
         logger.info(f"Device {torch.cuda.get_device_name(0)} is availble")
 
