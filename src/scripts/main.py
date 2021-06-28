@@ -5,10 +5,7 @@ import torch
 import yaml
 from transformers import AutoTokenizer
 
-from src.baselines.data_argument import BaselineDataArguments
-from src.baselines.datasets import BaselineBertDataset
-from src.baselines.model_argument import BaselineModelArguments
-from src.baselines.models import BaselineBertModel
+from src.backbone.base_arguments import BaseDataArguments, BaseModelArguments
 from src.train_utils.helpers import count_parameters, seed_everything
 from src.train_utils.trainer import Trainer
 from src.train_utils.training_argument import TrainingArguments
@@ -47,7 +44,65 @@ if __name__ == "__main__":
 
     print_signature()
 
-    parser = HfArgumentParser((BaselineModelArguments, BaselineDataArguments, TrainingArguments))
+    parser = HfArgumentParser((BaseModelArguments, BaseDataArguments, TrainingArguments))
+    _, _, training_args = parser.parse_args_into_dataclasses()
+
+    if training_args.experiment == "baseline":
+        from src.baselines.data_argument import (
+            BaselineDataArguments as KPADataArguments,
+        )
+        from src.baselines.datasets import (
+            BaselineInferenceDataset as KPAInferenceDataset,
+        )
+        from src.baselines.datasets import BaselineTrainDataset as KPATrainDataset
+        from src.baselines.model_argument import (
+            BaselineModelArguments as KPAModelArguments,
+        )
+        from src.baselines.models import BaselineModel as KPAModel
+    elif training_args.experiment == "qa":
+        from src.question_answering.data_argument import (
+            QADataArguments as KPADataArguments,
+        )
+        from src.question_answering.datasets import (
+            QAInferenceDataset as KPAInferenceDataset,
+        )
+        from src.question_answering.datasets import QATrainDataset as KPATrainDataset
+        from src.question_answering.model_argument import (
+            QAModelArguments as KPAModelArguments,
+        )
+        from src.question_answering.models import QABertModel as KPAModel
+    elif training_args.experiment == "triplet":
+        from src.triplet.data_argument import TripletDataArguments as KPADataArguments
+        from src.triplet.datasets import TripletInferenceDataset as KPAInferenceDataset
+        from src.triplet.datasets import TripletTrainDataset as KPATrainDataset
+        from src.triplet.model_argument import (
+            TripletModelArguments as KPAModelArguments,
+        )
+        from src.triplet.models import TripletModel as KPAModel
+    elif training_args.experiment == "mixed":
+        from src.mixed.data_argument import MixedDataArguments as KPADataArguments
+        from src.mixed.datasets import MixedInferenceDataset as KPAInferenceDataset
+        from src.mixed.datasets import MixedTrainDataset as KPATrainDataset
+        from src.mixed.model_argument import MixedModelArguments as KPAModelArguments
+        from src.mixed.models import MixedModel as KPAModel
+    elif training_args.experiment == "pseudolabel":
+        from src.pseudo_label.data_argument import (
+            PseudoLabelDataArguments as KPADataArguments,
+        )
+        from src.pseudo_label.datasets import (
+            PseudoLabelInferenceDataset as KPAInferenceDataset,
+        )
+        from src.pseudo_label.datasets import PseudoLabelTrainDataset as KPATrainDataset
+        from src.pseudo_label.model_argument import (
+            PseudoLabelModelArguments as KPAModelArguments,
+        )
+        from src.pseudo_label.models import PseudoLabelModel as KPAModel
+    else:
+        raise NotImplementedError(
+            f"Experiment {training_args.experiment} is not implemented yet. Must be in `baseline`, `qa`, `triplet`, `mixed` or `pseudolabel`"
+        )
+
+    parser = HfArgumentParser((KPAModelArguments, KPADataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     if (
@@ -83,7 +138,7 @@ if __name__ == "__main__":
             "and load it from here, using --tokenizer"
         )
 
-    model = BaselineBertModel(args=model_args)
+    model = KPAModel(args=model_args)
     tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
     logger.info(f"Number of parameters: {count_parameters(model)}")
 
@@ -140,15 +195,13 @@ if __name__ == "__main__":
     train_df.to_csv("train.csv", index=False)
     val_df.to_csv("val.csv", index=False)
 
-    train_dataset = BaselineBertDataset(
+    train_dataset = KPATrainDataset(
         df=train_df,
-        arg_df=train_arg_df,
-        labels_df=train_labels_df,
         tokenizer=tokenizer,
         args=data_args,
     )
 
-    val_dataset = BaselineBertDataset(
+    val_dataset = KPAInferenceDataset(
         df=val_inf_df,
         arg_df=val_arg_df,
         labels_df=val_labels_df,
@@ -156,7 +209,7 @@ if __name__ == "__main__":
         args=data_args,
     )
 
-    test_dataset = BaselineBertDataset(
+    test_dataset = KPAInferenceDataset(
         df=test_inf_df,
         arg_df=test_arg_df,
         labels_df=test_labels_df,

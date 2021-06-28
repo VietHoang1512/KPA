@@ -4,11 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from src.backbone.base_model import BaseModel
-from src.losses import (
-    HardNegativeTripletLoss,
-    HardPositiveTripletLoss,
-    TripletLoss,
-)
+from src.losses import HardNegativeTripletLoss, HardPositiveTripletLoss, TripletLoss
 from src.triplet.model_argument import TripletModelArguments
 from src.utils.logging import custom_logger
 

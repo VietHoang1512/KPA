@@ -2,7 +2,8 @@ export PYTHONPATH=$PWD
 for fold_id in 1 2 3 4 
 do
         echo "TRAINING ON FOLD $fold_id"
-        python src/scripts/train_triplet.py \
+        python src/scripts/main.py \
+                --experiment "triplet" \
                 --output_dir "outputs/triplet/fold_$fold_id" \
                 --model_name_or_path "roberta-base" \
                 --tokenizer "roberta-base" \

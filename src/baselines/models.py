@@ -5,17 +5,13 @@ from transformers import AutoConfig
 
 from src.backbone.base_model import BaseModel
 from src.baselines.model_argument import BaselineModelArguments
-from src.losses import (
-    ContrastiveLoss,
-    CosineSimilarityLoss,
-    OnlineContrastiveLoss,
-)
+from src.losses import ContrastiveLoss, CosineSimilarityLoss, OnlineContrastiveLoss
 from src.utils.logging import custom_logger
 
 logger = custom_logger(__name__)
 
 
-class BaselineBertModel(BaseModel):
+class BaselineModel(BaseModel):
     def __init__(self, args: BaselineModelArguments):
         """
         Simple Bert Siamese Model.
@@ -80,7 +76,7 @@ class BaselineBertModel(BaseModel):
         return similarity
 
 
-class BertKPAClassificationModel(BaseModel):
+class ClassificationModel(BaseModel):
     def __init__(self, args: BaselineModelArguments):
         """
         Simple Bert Classification Model.

@@ -13,7 +13,7 @@ from src.utils.logging import custom_logger
 logger = custom_logger(__name__)
 
 
-class TripletDataset(BaseDataset):
+class TripletTrainDataset(BaseDataset):
     def __init__(
         self,
         df: pd.DataFrame,
