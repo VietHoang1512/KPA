@@ -12,7 +12,8 @@ predict/
 kpm_data
 IBM_Debater
 quora
-kpm_6_folds
+kpm_k_folds
+
 # assets
 # stuff
 # .flake8

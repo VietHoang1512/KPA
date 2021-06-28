@@ -52,8 +52,8 @@ python src/scripts/main.py \
         --model_name_or_path roberta-base \
         --tokenizer roberta-base \
         --distance "cosine" \
-        --directory "kpm_6_folds/fold_1/" \
-        --test_directory "kpm_6_folds/test/" \
+        --directory "kpm_k_folds/fold_1/" \
+        --test_directory "kpm_k_folds/test/" \
         --logging_dir "$OUTPUT_DIR/" \
         --logging_steps 20 \
         --max_pos 30 \

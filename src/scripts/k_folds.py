@@ -48,7 +48,7 @@ if __name__ == "__main__":
         f"Checking missing data: {all_df[all_df.columns].merge(arg_kp_df, indicator=True, how='outer')['_merge'].eq('both').all()}"
     )
 
-    split_and_dump(all_df=all_df, fold_ids=constants.FOLD1, output_dir="kpm_6_folds/fold_1")
-    split_and_dump(all_df=all_df, fold_ids=constants.FOLD2, output_dir="kpm_6_folds/fold_2")
-    split_and_dump(all_df=all_df, fold_ids=constants.FOLD3, output_dir="kpm_6_folds/fold_3")
-    split_and_dump(all_df=all_df, fold_ids=constants.FOLD4, output_dir="kpm_6_folds/fold_4")
+    split_and_dump(all_df=all_df, fold_ids=constants.FOLD1, output_dir="kpm_k_folds/fold_1")
+    split_and_dump(all_df=all_df, fold_ids=constants.FOLD2, output_dir="kpm_k_folds/fold_2")
+    split_and_dump(all_df=all_df, fold_ids=constants.FOLD3, output_dir="kpm_k_folds/fold_3")
+    split_and_dump(all_df=all_df, fold_ids=constants.FOLD4, output_dir="kpm_k_folds/fold_4")
