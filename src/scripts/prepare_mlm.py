@@ -20,7 +20,7 @@ parser.add_argument(
 parser.add_argument(
     "--test_data",
     type=str,
-    default="kpm_6_folds/test/",
+    default="kpm_k_folds/test/",
     help="path to the private test data directory",
 )
 args = parser.parse_args()
