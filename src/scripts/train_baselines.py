@@ -2,6 +2,7 @@ import os
 from typing import List
 
 import torch
+import yaml
 from transformers import AutoTokenizer
 
 from src.baselines.data_argument import BaselineDataArguments
@@ -58,6 +59,13 @@ if __name__ == "__main__":
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
         )
+    os.makedirs(training_args.output_dir, exist_ok=True)
+    with open(os.path.join(training_args.output_dir, "model.yaml"), "w") as f:
+        yaml.dump(vars(model_args), f, indent=2)
+    with open(os.path.join(training_args.output_dir, "data.yaml"), "w") as f:
+        yaml.dump(vars(data_args), f, indent=2)
+    with open(os.path.join(training_args.output_dir, "training.yaml"), "w") as f:
+        yaml.dump(vars(training_args), f, indent=2)
 
     if torch.cuda.device_count() >= 1:
         logger.info(f"Device {torch.cuda.get_device_name(0)} is availble")

@@ -157,8 +157,6 @@ class Trainer:
             scheduler.load_state_dict(torch.load(os.path.join(model_path, "model.pt")))
             self.logger.info("Loaded all previous model, optimizer, scheduler states")
 
-        torch.save(self.args, os.path.join(self.args.output_dir, "training_args.bin"))
-
         model.to(self.args.device)
 
         if self.tb_writer is not None:
@@ -309,7 +307,7 @@ class Trainer:
 
     def load_model(self, model: nn.Module, file_path: str):
         model.load_state_dict(torch.load(file_path))
-        print(f"Loaded model from {file_path}")
+        self.logger.info(f"Loaded model from {file_path}")
         model.to(self.args.device)
         return model
 
@@ -346,7 +344,6 @@ class Trainer:
         val_df["label"] = predictions
         return self.calculate_metric(val_df, val_dataloader.dataset.labels_df, val_dataloader.dataset.arg_df)
 
-    @classmethod
     def calculate_metric(self, val_df: pd.DataFrame, labels_df: pd.DataFrame, arg_df: pd.DataFrame):
         arg_df = arg_df[["arg_id", "topic", "stance"]].copy()
 
@@ -362,7 +359,7 @@ class Trainer:
             arg.append(arg_id)
             kp.append(best_kp[0])
             scores.append(best_kp[1])
-        print(f"loaded predictions for {len(arg)} arguments")
+        self.logger.info(f"loaded predictions for {len(arg)} arguments")
 
         predictions_df = pd.DataFrame({"arg_id": arg, "key_point_id": kp, "score": scores})
         # make sure each arg_id has a prediction
@@ -380,9 +377,8 @@ class Trainer:
         merged_df["label_relaxed"] = merged_df["label"].fillna(1)
         return evaluate_predictions(merged_df), predictions
 
-    @classmethod
     def _save_prediction(self, prediction, output_dir):
-        print("Saving prediction to", output_dir)
+        self.logger.info(f"Saving prediction to {output_dir}")
         with open(os.path.join(output_dir, "predictions.p"), "w") as f:
             json.dump(prediction, f, indent=4)
 

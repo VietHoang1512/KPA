@@ -1,4 +1,4 @@
-OUTPUT_DIR=/outputs/pseudo_label/roberta-base/
+OUTPUT_DIR=outputs/pseudo_label/roberta-base/
 
 echo "OUTPUT DIRECTORY $OUTPUT_DIR"
 
@@ -40,7 +40,7 @@ do
                 --text_dim 256 \
                 --num_workers 4 \
                 --seed 0 
-                # --normalize
+
         
 done
 

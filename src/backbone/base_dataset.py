@@ -23,7 +23,7 @@ class BaseDataset(Dataset):
     def __getitem__(self, idx):
         raise NotImplementedError
 
-    def _tokenize(self, text: str, max_len: int) -> Tuple[torch.tensor, torch.tensor, torch.tensor]:
+    def _tokenize(self, text: str, max_len: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         inputs = self.tokenizer.encode_plus(
             text,
             max_length=max_len,
