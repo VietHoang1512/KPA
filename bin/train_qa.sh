@@ -1,7 +1,8 @@
 export PYTHONPATH=$PWD
 for fold_id in 1 2 3 4 
 do
-        python src/scripts/train_qa.py \
+        python src/scripts/main.py \
+                --experiment "qa" \
                 --output_dir "outputs/qa/fold_$fold_id" \
                 --model_name_or_path "roberta-base" \
                 --tokenizer "roberta-base" \

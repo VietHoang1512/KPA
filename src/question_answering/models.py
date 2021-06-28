@@ -3,11 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.backbone.base_model import BaseModel
-from src.losses import (
-    ContrastiveLoss,
-    CosineSimilarityLoss,
-    OnlineContrastiveLoss,
-)
+from src.losses import ContrastiveLoss, CosineSimilarityLoss, OnlineContrastiveLoss
 from src.question_answering.model_argument import QAModelArguments
 from src.utils.logging import custom_logger
 

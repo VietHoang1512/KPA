@@ -14,6 +14,8 @@ class TrainingArguments:
     """TrainingArguments is the subset of the arguments we use in our example
     scripts."""
 
+    experiment: str = field(metadata={"help": "Experiment type, `baseline`, `qa`, `triplet`, `mixed` or `pseudolabel`"})
+
     output_dir: str = field(
         metadata={"help": "The output directory where the model predictions and checkpoints will be written."}
     )

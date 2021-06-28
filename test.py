@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer
 
 from src.baselines.model_argument import BaselineModelArguments
-from src.baselines.models import BaselineBertModel
+from src.baselines.models import BaselineModel
 
 if __name__ == "__main__":
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     model_argument.model_name_or_path = BERT_MODEL
 
     tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL)
-    model = BaselineBertModel(args=model_argument)
+    model = BaselineModel(args=model_argument)
 
     topics = [
         "Argument mining  is a young and gradually maturing research area within computational linguistics"
