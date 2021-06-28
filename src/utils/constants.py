@@ -2,10 +2,8 @@
 MULTI_SEP_TOKENS_TOKENIZERS_SET = {"roberta", "camembert", "bart", "mpnet"}
 PREFIX_CHECKPOINT_DIR = "checkpoint"
 
-# 5-FOLDS
+# 4-FOLDS
 FOLD1 = {4, 7, 8, 15}  # 3458 (organizer's)
-FOLD2 = {9, 11, 14, 24}  # 3483
-FOLD3 = {0, 6, 19, 21}  # 3484
+FOLD2 = {1, 10, 20, 23}  # 3507
+FOLD3 = {12, 13, 16, 26}  # 3574
 FOLD4 = {3, 18, 22, 25}  # 3484
-FOLD5 = {1, 10, 20, 23}  # 3507
-FOLD6 = {12, 13, 16, 26}  # 3574

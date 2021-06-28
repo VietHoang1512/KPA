@@ -1,7 +1,7 @@
 import os
-from typing import List
 
 import torch
+import yaml
 from transformers import AutoTokenizer
 
 from src.pseudo_label.data_argument import PseudoLabelDataArguments
@@ -23,28 +23,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 logger = custom_logger(__name__)
 
-
-def word_len(texts: List[str]) -> List:
-    def _word_len(text: str, separator=" ") -> int:
-        return len(text.split(separator))
-
-    return list(map(_word_len, texts))
-
-
-def char_len(texts: List[str]) -> List:
-    def _char_len(text: str) -> int:
-        return len(text)
-
-    return list(map(_char_len, texts))
-
-
-def token_len(texts: List[str], tokenizer: AutoTokenizer) -> List:
-    def _token_len(text: str) -> int:
-        return len(tokenizer.encode(text))
-
-    return list(map(_token_len, texts))
-
-
 if __name__ == "__main__":
 
     print_signature()
@@ -61,7 +39,13 @@ if __name__ == "__main__":
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
         )
-
+    os.makedirs(training_args.output_dir, exist_ok=True)
+    with open(os.path.join(training_args.output_dir, "model.yaml"), "w") as f:
+        yaml.dump(vars(model_args), f, indent=2)
+    with open(os.path.join(training_args.output_dir, "data.yaml"), "w") as f:
+        yaml.dump(vars(data_args), f, indent=2)
+    with open(os.path.join(training_args.output_dir, "training.yaml"), "w") as f:
+        yaml.dump(vars(training_args), f, indent=2)
     if torch.cuda.device_count() >= 1:
         logger.info(f"Device {torch.cuda.get_device_name(0)} is availble")
 

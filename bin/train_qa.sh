@@ -1,4 +1,3 @@
-%%writefile bin/train_qa.sh
 export PYTHONPATH=$PWD
 for fold_id in 1 2 3 4 
 do
