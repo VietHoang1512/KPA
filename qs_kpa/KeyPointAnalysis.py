@@ -76,6 +76,7 @@ class KeyPointAnalysis(object):
 
     def _download_and_cache(self, model_path: str) -> None:
         gdown.download(URL, model_path, quiet=False)
+        logger.info("Pretrained model weights downloaded from cloud storage")
 
     def _load_model(self, model_path: str, model: PseudoLabelModel) -> None:
         model.load_state_dict(torch.load(model_path))
