@@ -5,10 +5,20 @@
 [![CircleCI](https://circleci.com/gh/VietHoang1512/KPA.svg?style=svg&circle-token=a196c015fd323b139ee617a2ebd36b9055dee3a2)](https://circleci.com/gh/VietHoang1512/KPA/tree/main)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+<a href="https://colab.research.google.com/drive/1RNZsW30ulRs5Avkwe8Jqfc8zRbhpmUbD?usp=sharing">
+<img src="https://img.shields.io/badge/stable-ff9f01?logo=google-colab&logoColor=white">
+</a>
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/776410d9c5ea4290b0301d5f70bec9b5)](https://www.codacy.com/gh/VietHoang1512/KPA/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=VietHoang1512/KPA&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/viethoang1512/kpa/badge?s=805044f88408096519ce8ab36564bb8b98e8e9ba)](https://www.codefactor.io/repository/github/viethoang1512/kpa)
 
 </div>
+
+
+## 💪Installation
+
+```bash
+pip install keypoint-analysis
+```
 
 ## TODO:
 
@@ -47,6 +57,7 @@ Group the arguments by their key point and consider the order of that key point 
 - [x] K-folds
 - [x] Full-flow
 
-## Acknowledgements
+## Contributors
 
-The implemented [losses](src/losses) are adapted from [sentence-transformers](https://github.com/UKPLab/sentence-transformers).
+- Phan Viet Hoang
+- Nguyen Duc Long
