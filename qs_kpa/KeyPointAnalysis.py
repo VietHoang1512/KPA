@@ -27,7 +27,11 @@ class KeyPointAnalysis(object):
     """
 
     def __init__(
-        self, model_path: Optional[str] = None, device: Optional[str] = None, cache_folder: Optional[str] = None
+        self,
+        from_pretrained: Optional[bool] = True,
+        model_path: Optional[str] = None,
+        device: Optional[str] = None,
+        cache_folder: Optional[str] = None,
     ):
 
         if cache_folder is None:
@@ -45,24 +49,25 @@ class KeyPointAnalysis(object):
         model_args = PseudoLabelModelArguments()
         self.model = PseudoLabelModel(args=model_args)
 
-        loaded = False
-        if model_path is not None:
-            if os.path.exists(model_path):
+        if from_pretrained:
+            loaded = False
+            if model_path is not None:
+                if os.path.exists(model_path):
+                    try:
+                        self._load_model(model_path=model_path, model=self.model)
+                        loaded = True
+                    except Exception as e:
+                        logger.warning(e)
+
+            if not loaded:
+                os.makedirs(cache_folder, exist_ok=True)
+                model_path = os.path.join(cache_folder, MODEL_WEIGHT)
                 try:
                     self._load_model(model_path=model_path, model=self.model)
-                    loaded = True
                 except Exception as e:
                     logger.warning(e)
-
-        if not loaded:
-            os.makedirs(cache_folder, exist_ok=True)
-            model_path = os.path.join(cache_folder, MODEL_WEIGHT)
-            try:
-                self._load_model(model_path=model_path, model=self.model)
-            except Exception as e:
-                logger.warning(e)
-                self._download_and_cache(model_path)
-                self._load_model(model_path=model_path, model=self.model)
+                    self._download_and_cache(model_path)
+                    self._load_model(model_path=model_path, model=self.model)
 
         self.tokenizer = AutoTokenizer.from_pretrained("roberta-base", use_fast=False)
 
@@ -74,10 +79,12 @@ class KeyPointAnalysis(object):
         self.model.to(self.device)
         self.model.eval()
 
+    @classmethod
     def _download_and_cache(self, model_path: str) -> None:
         gdown.download(URL, model_path, quiet=False)
         logger.info("Pretrained model weights downloaded from cloud storage")
 
+    @classmethod
     def _load_model(self, model_path: str, model: PseudoLabelModel) -> None:
         model.load_state_dict(torch.load(model_path))
         logger.info(f"Loaded model from {model_path}")
