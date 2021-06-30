@@ -1,8 +1,9 @@
+scipy
 torch
 gdown
 pandas
 numpy
-scikit-learn
+sklearn
 tqdm
 seaborn
 matplotlib
