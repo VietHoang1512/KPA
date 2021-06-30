@@ -4,7 +4,7 @@ from qs_kpa import KeyPointAnalysis
 
 if __name__ == "__main__":
 
-    encoder = KeyPointAnalysis()
+    encoder = KeyPointAnalysis(cache_folder="key_point_analysis")
     inputs = [
         (
             "Assisted suicide should be a criminal offence",
