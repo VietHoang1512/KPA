@@ -4,7 +4,7 @@ echo "OUTPUT DIRECTORY $OUTPUT_DIR"
 
 mkdir -p $OUTPUT_DIR
 
-cp pseudo_label/models.py  $OUTPUT_DIR
+cp qs_kpa/pseudo_label/models.py  $OUTPUT_DIR
 
 for fold_id in 1 2 3 4
 do
