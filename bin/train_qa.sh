@@ -1,7 +1,7 @@
 export PYTHONPATH=$PWD
 for fold_id in 1 2 3 4 
 do
-        python src/scripts/main.py \
+        python scripts/main.py \
                 --experiment "qa" \
                 --output_dir "outputs/qa/fold_$fold_id" \
                 --model_name_or_path "roberta-base" \
