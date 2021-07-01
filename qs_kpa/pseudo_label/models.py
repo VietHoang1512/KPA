@@ -120,3 +120,19 @@ class PseudoLabelModel(BaseModel):
             statement_rep = F.normalize(statement_rep, p=2, dim=1)
 
         return statement_rep
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        s = ""
+        s += f"\tBackbone: {self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name}\n"
+        s += f"\tNumber of hidden state: {self.args.n_hiddens}\n"
+        s += f"\tDropout rate: {self.args.drop_rate}\n"
+        s += f"\tUse batch normalization: {self.args.batch_norm}\n"
+        s += f"\tHidden representation dimension used for encoding stance: {self.args.stance_dim}\n"
+        s += f"\tHidden representation dimension used for encoding text: {self.args.text_dim}\n"
+        s += f"\tDistance metric: {self.args.distance}\n"
+        s += f"\tNormalize embedding: {self.args.normalize}\n"
+        s += f"\tMargin: {self.args.margin}"
+        return s

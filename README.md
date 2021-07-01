@@ -11,15 +11,57 @@
 
 </div>
 
-## Installation
+
+
+## Keypoint Analysis 
+
+This library is based on the Transformers library by HuggingFace. **Keypoint Analysis** quickly embedds the statements with provided supported topic and the stances toward that topic.
+
+### What's New
+
+#### July 1, 2021
+
+- First release of [keypoint-analysis](https://pypi.org/project/keypoint-analysis/) python package
+
+### Installation
 
 ```bash
 pip install keypoint-analysis
 ```
 
-## TODO:
+### Quick example
 
-### Pair-wise keypoint-argument
+```python
+# Import needed libraries
+from qs_kpa import KeyPointAnalysis
+
+# Create a KeyPointAnalysis model
+encoder = KeyPointAnalysis()
+
+# Model configuration
+print(encoder)
+
+# Preparing data (a tuplet of (topic, statement, stance) or a list of tuple)
+inputs = [
+    (
+        "Assisted suicide should be a criminal offence",
+        "a cure or treatment may be discovered shortly after having ended someone's life unnecessarily.",
+        1,
+    ),
+    (
+        "Assisted suicide should be a criminal offence",
+        "Assisted suicide should not be allowed because many times people can still get better",
+        1,
+    ),
+    ("Assisted suicide should be a criminal offence", "Assisted suicide is akin to killing someone", 1),
+]
+
+# Go and embedd everything
+output = encoder.encode(inputs, convert_to_numpy=True)
+```
+
+### Detailed training
+
 Given a pair of key point and argument (along with their supported topic & stance) and the matching score. Similar pairs with label 1 are pulled together, or pushed away otherwise.
 
 #### Model
@@ -32,29 +74,46 @@ Given a pair of key point and argument (along with their supported topic & stanc
 
 #### Loss
 
-- [x] Constrastive
-- [x] Online Constrastive
-- [x] Triplet
-- [x] Online Triplet (Hard negative/positive mining)
+- Constrastive
+- Online Constrastive
+- Triplet
+- Online Triplet (Hard negative/positive mining)
 
 #### Distance
 
-- [x] Euclidean
-- [x] Cosine
-- [x] Manhattan
+- Euclidean
+- Cosine
+- Manhattan
+
+#### Utils
+
+- K-folds
+- Full-flow
 
 ### Pseudo-label
 
-Group the arguments by their key point and consider the order of that key point within the topic as their labels (see [pseudo_label](src/pseudo_label)). We can now utilize available pytorch metrics learning distance, losses, miners or reducers from this great [open-source](https://github.com/KevinMusgrave/pytorch-metric-learning) in the main training workflow. This is also our best approach (single-model) so far.
+Group the arguments by their key point and consider the order of that key point within the topic as their labels (see [pseudo_label](qs_kpa/pseudo_label)). We can now utilize available pytorch metrics learning distance, losses, miners or reducers from this great [open-source](https://github.com/KevinMusgrave/pytorch-metric-learning) in the main training workflow. This is also our best approach (single-model) so far.
 
-![Model architecture](assets/model.png "Model architecture")
+![Model architecture](https://user-images.githubusercontent.com/52401767/124059293-0ec81100-da55-11eb-94a4-cf9914479a78.png)
 
-### Utils
+### Training data
 
-- [x] K-folds
-- [x] Full-flow
+**ArgKP** dataset ([Bar-Haim et al., ACL-2020](https://www.aclweb.org/anthology/2020.acl-main.371.pdf))
 
-## Contributors
+### Contributors
 
 - Phan Viet Hoang
 - Nguyen Duc Long
+
+### BibTeX
+
+```bibtex
+@misc{hoang2021qskpa,
+  author = {Phan, V.H. & Nguyen, D.L.},
+  title = {Keypoint Analysis},
+  year = {2021},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/VietHoang1512/KPA}}
+}
+```
