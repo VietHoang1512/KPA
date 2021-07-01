@@ -66,13 +66,37 @@ class QATrainDataset(BaseDataset):
 
         stance = torch.tensor([self.stance[idx]], dtype=torch.float)
 
+        key_point_input_ids = torch.tensor(encoded_key_point["input_ids"], dtype=torch.long)
+        key_point_attention_mask = torch.tensor(encoded_key_point["attention_mask"], dtype=torch.long)
+        key_point_token_type_ids = torch.tensor(encoded_key_point["token_type_ids"], dtype=torch.long)
+        argument_input_ids = torch.tensor(encoded_argument["input_ids"], dtype=torch.long)
+        argument_attention_mask = torch.tensor(encoded_argument["attention_mask"], dtype=torch.long)
+        argument_token_type_ids = torch.tensor(encoded_argument["token_type_ids"], dtype=torch.long)
+
+        if self.tokenizer_type in ["xlnet"]:
+            if key_point_input_ids.size(0) > 1:
+                logger.warning(
+                    f"Topic `{topic}` and {key_point} is truncated with maximum length {self.max_topic_length} and {self.max_statement_length}"
+                )
+            key_point_input_ids = key_point_input_ids[0]
+            key_point_attention_mask = key_point_attention_mask[0]
+            key_point_token_type_ids = key_point_token_type_ids[0]
+
+            if argument_input_ids.size(0) > 1:
+                logger.warning(
+                    f"Topic `{topic}` and {argument} is truncated with maximum length {self.max_topic_length} and {self.max_statement_length}"
+                )
+            argument_input_ids = argument_input_ids[0]
+            argument_attention_mask = argument_attention_mask[0]
+            argument_token_type_ids = argument_token_type_ids[0]
+
         sample = {
-            "key_point_input_ids": torch.tensor(encoded_key_point["input_ids"], dtype=torch.long),
-            "key_point_attention_mask": torch.tensor(encoded_key_point["attention_mask"], dtype=torch.long),
-            "key_point_token_type_ids": torch.tensor(encoded_key_point["token_type_ids"], dtype=torch.long),
-            "argument_input_ids": torch.tensor(encoded_argument["input_ids"], dtype=torch.long),
-            "argument_attention_mask": torch.tensor(encoded_argument["attention_mask"], dtype=torch.long),
-            "argument_token_type_ids": torch.tensor(encoded_argument["token_type_ids"], dtype=torch.long),
+            "key_point_input_ids": key_point_input_ids,
+            "key_point_attention_mask": key_point_attention_mask,
+            "key_point_token_type_ids": key_point_token_type_ids,
+            "argument_input_ids": argument_input_ids,
+            "argument_attention_mask": argument_attention_mask,
+            "argument_token_type_ids": argument_token_type_ids,
             "stance": stance,
             "label": torch.tensor(self.label[idx], dtype=torch.float),
         }
@@ -135,10 +159,7 @@ class QATrainDataset(BaseDataset):
             return_token_type_ids=True,
             return_overflowing_tokens=True,
         )
-        if (
-            len(encoded_key_point.get("overflowing_tokens", [])) > 0
-            or len(encoded_argument.get("overflowing_tokens", [])) > 0
-        ):
+        if encoded_key_point.get("num_truncated_tokens", 0) > 0 or encoded_argument.get("num_truncated_tokens", 0) > 0:
             logger.warning(f"String is truncated with maximum length {max_length}")
 
         return encoded_key_point, encoded_argument
@@ -273,10 +294,7 @@ class QAInferenceDataset(BaseDataset):
             return_token_type_ids=True,
             return_overflowing_tokens=True,
         )
-        if (
-            len(encoded_key_point.get("overflowing_tokens", [])) > 0
-            or len(encoded_argument.get("overflowing_tokens", [])) > 0
-        ):
+        if encoded_key_point.get("num_truncated_tokens", 0) > 0 or encoded_argument.get("num_truncated_tokens", 0) > 0:
             logger.warning(f"String is truncated with maximum length {max_length}")
 
         return encoded_key_point, encoded_argument

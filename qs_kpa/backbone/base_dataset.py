@@ -37,12 +37,15 @@ class BaseDataset(Dataset):
         token_type_ids = torch.tensor(inputs["token_type_ids"], dtype=torch.long)
 
         if self.tokenizer_type in ["xlnet"]:
-            input_ids = torch.squeeze(input_ids, 1)
-            attention_mask = torch.squeeze(attention_mask, 1)
-            token_type_ids = torch.squeeze(token_type_ids, 1)
+            if input_ids.size(0) > 1:
+                logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
+            input_ids = input_ids[0]
+            attention_mask = attention_mask[0]
+            token_type_ids = token_type_ids[0]
+        else:
+            if inputs.get("num_truncated_tokens", 0) > 0:
+                logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
 
-        if len(inputs.get("overflowing_tokens", [])) > 0:
-            logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
         return input_ids, attention_mask, token_type_ids
 
     def _process_data(self, df: pd.DataFrame) -> List[Dict]:
