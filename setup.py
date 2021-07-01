@@ -8,7 +8,7 @@ with open("requirements.txt", "r") as f:
 
 setuptools.setup(
     name="keypoint-analysis",
-    version="1.0.0",
+    version="1.0.3",
     description="Quantitative Summarization – Key Point Analysis",
     long_description=long_description,
     long_description_content_type="text/markdown",

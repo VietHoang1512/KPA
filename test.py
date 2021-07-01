@@ -4,8 +4,10 @@ from qs_kpa import KeyPointAnalysis
 
 if __name__ == "__main__":
 
-    encoder = KeyPointAnalysis(from_pretrained=False)
+    encoder = KeyPointAnalysis()
+
     print(encoder)
+
     inputs = [
         (
             "Assisted suicide should be a criminal offence",

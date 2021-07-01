@@ -95,7 +95,7 @@ class KeyPointAnalysis(object):
 
     @classmethod
     def _load_model(self, model_path: str, model: PseudoLabelModel) -> None:
-        model.load_state_dict(torch.load(model_path))
+        model.load_state_dict(torch.load(model_path, map_location=torch.device("cpu")))
         logger.info(f"Loaded model from {model_path}")
 
     def to(self, device: str):

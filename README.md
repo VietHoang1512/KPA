@@ -11,8 +11,6 @@
 
 </div>
 
-
-
 ## Keypoint Analysis 
 
 This library is based on the Transformers library by HuggingFace. **Keypoint Analysis** quickly embedds the statements with provided supported topic and the stances toward that topic.
@@ -25,8 +23,17 @@ This library is based on the Transformers library by HuggingFace. **Keypoint Ana
 
 ### Installation
 
+#### Install with pip (stable version)
+
 ```bash
 pip install keypoint-analysis
+```
+
+#### Install from sources (latest version)
+
+```bash
+git clone https://github.com/VietHoang1512/KPA
+pip install -e .
 ```
 
 ### Quick example
