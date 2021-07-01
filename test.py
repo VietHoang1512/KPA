@@ -5,6 +5,7 @@ from qs_kpa import KeyPointAnalysis
 if __name__ == "__main__":
 
     encoder = KeyPointAnalysis(from_pretrained=False)
+    print(encoder)
     inputs = [
         (
             "Assisted suicide should be a criminal offence",
@@ -19,7 +20,7 @@ if __name__ == "__main__":
         ("Assisted suicide should be a criminal offence", "Assisted suicide is akin to killing someone", 1),
     ]
 
-    output = encoder.encode(inputs[0], convert_to_numpy=True)
+    output = encoder.encode(inputs[0], show_progress_bar=False, convert_to_numpy=True)
     print("Embedding shape", output.shape)
 
     output = encoder.encode(inputs, convert_to_numpy=True)

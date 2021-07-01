@@ -53,7 +53,7 @@ class BaseModelArguments:
     text_dim: int = field(default=256, metadata={"help": "Hidden representation dimension used for encoding text."})
 
     distance: str = field(
-        default="cosine", metadata={"help": "Function that returns a distance between two emeddings."}
+        default="cosine", metadata={"help": "Function that returns a distance between two embeddings."}
     )
 
     normalize: bool = field(default=False, metadata={"help": "Whether to normalize the embedding vectors or not."})
