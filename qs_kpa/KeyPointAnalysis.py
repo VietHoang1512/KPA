@@ -79,6 +79,15 @@ class KeyPointAnalysis(object):
         self.model.to(self.device)
         self.model.eval()
 
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        s = ""
+        s += f"Device: {self.device} \n"
+        s += f"Backbone configuration:\n{self.model}"
+        return s
+
     @classmethod
     def _download_and_cache(self, model_path: str) -> None:
         gdown.download(URL, model_path, quiet=False)
@@ -88,6 +97,11 @@ class KeyPointAnalysis(object):
     def _load_model(self, model_path: str, model: PseudoLabelModel) -> None:
         model.load_state_dict(torch.load(model_path))
         logger.info(f"Loaded model from {model_path}")
+
+    def to(self, device: str):
+        self.device = torch.device(device)
+        self.model.to(self.device)
+        self.model.eval()
 
     def encode(
         self,

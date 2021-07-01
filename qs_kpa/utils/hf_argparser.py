@@ -76,38 +76,13 @@ class HfArgumentParser(ArgumentParser):
     def parse_args_into_dataclasses(
         self, args=None, return_remaining_strings=False, look_for_args_file=True
     ) -> Tuple[DataClass, ...]:
-        """
-        Parse command-line args into instances of the specified dataclass types.
-        This relies on argparse's `ArgumentParser.parse_known_args`.
-        See the doc at:
-        docs.python.org/3.7/library/argparse.html#argparse.ArgumentParser.parse_args
-        Args:
-            args:
-                List of strings to parse. The default is taken from sys.argv.
-                (same as argparse.ArgumentParser)
-            return_remaining_strings:
-                If true, also return a list of remaining argument strings.
-            look_for_args_file:
-                If true, will look for a ".args" file with the same base name
-                as the entry point script for this process, and will append its
-                potential content to the command line args.
-        Returns:
-            Tuple consisting of:
-                - the dataclass instances in the same order as they
-                  were passed to the initializer.abspath
-                - if applicable, an additional namespace for more
-                  (non-dataclass backed) arguments added to the parser
-                  after initialization.
-                - The potential list of remaining argument strings.
-                  (same as argparse.ArgumentParser.parse_known_args)
-        """
+
         if look_for_args_file and len(sys.argv):
             args_file = Path(sys.argv[0]).with_suffix(".args")
             if args_file.exists():
                 fargs = args_file.read_text().split()
                 args = fargs + args if args is not None else fargs + sys.argv[1:]
-                # in case of duplicate arguments the first one has precedence
-                # so we append rather than prepend.
+
         namespace, remaining_args = self.parse_known_args(args=args)
         outputs = []
         for dtype in self.dataclass_types:
@@ -142,9 +117,9 @@ class HfArgumentParser(ArgumentParser):
 
 
 if __name__ == "__main__":
-    from src.baselines.data_argument import DataArguments
-    from src.baselines.model_argument import ModelArguments
-    from src.train_utils.training_argument import TrainingArguments
+    from qs_kpa.baselines.data_argument import DataArguments
+    from qs_kpa.baselines.model_argument import ModelArguments
+    from qs_kpa.train_utils.training_argument import TrainingArguments
 
     parser = HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()

@@ -4,12 +4,12 @@ echo "OUTPUT DIRECTORY $OUTPUT_DIR"
 
 mkdir -p $OUTPUT_DIR
 
-cp src/pseudo_label/models.py  $OUTPUT_DIR
+cp pseudo_label/models.py  $OUTPUT_DIR
 
 for fold_id in 1 2 3 4
 do
         echo "TRAINING ON FOLD $fold_id"
-        python src/scripts/main.py \
+        python scripts/main.py \
                 --experiment "pseudolabel" \
                 --output_dir "$OUTPUT_DIR/fold_$fold_id" \
                 --model_name_or_path roberta-base \
@@ -46,7 +46,7 @@ do
 done
 
 echo "INFERENCE"
-python src/scripts/main.py \
+python scripts/main.py \
         --experiment "pseudolabel" \
         --output_dir "$OUTPUT_DIR" \
         --model_name_or_path roberta-base \
