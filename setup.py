@@ -3,12 +3,9 @@ import setuptools
 with open("README.md", "r") as f:
     long_description = f.read()
 
-with open("requirements.txt", "r") as f:
-    requirements = f.read().strip().split("\n")
-
 setuptools.setup(
     name="keypoint-analysis",
-    version="1.0.3",
+    version="1.0.4",
     description="Quantitative Summarization – Key Point Analysis",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -26,5 +23,15 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["scripts", "bin", ".circleci", "assets"]),
     package_dir={"qs_kpa": "qs_kpa"},
     include_package_data=True,
-    install_requires=requirements,
+    install_requires=[
+        "transformers>=4.1.0,<5.0.0",
+        "tqdm",
+        "torch>=1.6.0",
+        "numpy",
+        "sklearn",
+        "scipy",
+        "pandas",
+        "gdown",
+        "pytorch-metric-learning",
+    ],
 )

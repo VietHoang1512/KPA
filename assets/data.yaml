@@ -1,0 +1,7 @@
+directory: kpm_k_folds/fold_1/
+max_len: 30
+max_neg: 90
+max_pos: 30
+max_unknown: 15
+statement_max_len: 50
+test_directory: kpm_k_folds/test/
