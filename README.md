@@ -83,11 +83,11 @@ Given a pair of key point and argument (along with their supported topic & stanc
 
 #### Model
 
-| Model               | BERT/ConvBERT               | DistilBERT         | ALBERT             | XLNet            | RoBERTa                | ELECTRA            | BART            |
-| ------------------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
-| Siamese Baseline            | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
-| Siamese Question Answering-like              | ✔️ | ✔️ | ✔️ |✔️| ✔️ | ✔️ | ✔️ |
-| Custom loss Baseline             | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| Model               | BERT/ConvBERT               |  BORT           |  LUKE          |DistilBERT         | ALBERT             | XLNet            | RoBERTa                | ELECTRA            | BART            |
+| ------------------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| Siamese Baseline            | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| Siamese Question Answering-like              | ✔️ | ✔️ | ✔️ |✔️| ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| Custom loss Baseline             | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 
 #### Loss
 
