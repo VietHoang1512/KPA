@@ -73,7 +73,7 @@ class QATrainDataset(BaseDataset):
         argument_attention_mask = torch.tensor(encoded_argument["attention_mask"], dtype=torch.long)
         argument_token_type_ids = torch.tensor(encoded_argument["token_type_ids"], dtype=torch.long)
 
-        if self.tokenizer_type in ["xlnet"]:
+        if self.tokenizer_type in ["xlnet", "albert"]:
             if key_point_input_ids.size(0) > 1:
                 logger.warning(
                     f"Topic `{topic}` and {key_point} is truncated with maximum length {self.max_topic_length} and {self.max_statement_length}"

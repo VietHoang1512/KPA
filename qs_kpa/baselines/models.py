@@ -92,10 +92,8 @@ class ClassificationModel(BaseModel):
             output_hidden_states=True,
         )
 
-        self.fc = nn.Sequential(
-            nn.Linear(args.stance_dim + 3 * config.hidden_size * self.n_hiddens, 1), nn.ReLU(inplace=True)
-        )
-        self.fc_stance = nn.Sequential(nn.Linear(1, args.stance_dim), nn.ReLU(inplace=True))
+        self.fc = nn.Linear(args.stance_dim + 3 * config.hidden_size * self.n_hiddens, 1)
+        self.fc_stance = nn.Linear(1, args.stance_dim)
 
     @classmethod
     def criterion(self, preds, label):
@@ -121,10 +119,18 @@ class ClassificationModel(BaseModel):
         key_point_output = self._forward_text(key_point_input_ids, key_point_attention_mask, key_point_token_type_ids)
         argument_output = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
 
-        output = torch.cat([stance_ouput, topic_output, key_point_output, argument_output], axis=1)
+        output1 = torch.cat([stance_ouput, topic_output, key_point_output, argument_output], axis=1)
+        output1 = self.fc(output1)
+        prob1 = torch.sigmoid(output1)
 
-        output = self.fc(output)
-        prob = torch.sigmoid(output)
+        output2 = torch.cat([stance_ouput, topic_output, argument_output, key_point_output], axis=1)
+        output2 = self.fc(output2)
+        prob2 = torch.sigmoid(output2)
 
-        loss = self.criterion(prob, label)
-        return loss, prob
+        prob = (prob1 + prob2) / 2
+
+        if self.training:
+            loss1 = self.criterion(prob1, label)
+            loss2 = self.criterion(prob2, label)
+            return (loss1 + loss2) / 2
+        return prob

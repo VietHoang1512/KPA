@@ -36,7 +36,7 @@ class BaseDataset(Dataset):
         attention_mask = torch.tensor(inputs["attention_mask"], dtype=torch.long)
         token_type_ids = torch.tensor(inputs["token_type_ids"], dtype=torch.long)
 
-        if self.tokenizer_type in ["xlnet"]:
+        if self.tokenizer_type in ["xlnet", "albert"]:
             if input_ids.size(0) > 1:
                 logger.warning(f"String `{text}` is truncated with maximum length {max_len}")
             input_ids = input_ids[0]

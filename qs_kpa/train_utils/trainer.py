@@ -240,6 +240,8 @@ class Trainer:
 
                         for metric, value in logs.items():
                             self.logger.info(f"{metric} : {value}")
+                            if self.tb_writer:
+                                self.tb_writer.add_scalar(metric, value, global_step)
                         self.logger.warning(f"Learning rate reduces to {optimizer.param_groups[0]['lr']}")
 
                         # Save model checkpoint
@@ -253,9 +255,6 @@ class Trainer:
                 if self.es.early_stop:
                     self.logger.warning("Early stopping")
                     break
-            else:
-                continue  # only executed if the inner loop did NOT break
-            break
 
             # Save model after each epoch
             # output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
@@ -265,10 +264,11 @@ class Trainer:
             # torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
             # torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
 
-            logs["TRAIN_LOSS"] = total_train_loss.avg
             if self.tb_writer:
-                for k, v in logs.items():
-                    self.tb_writer.add_scalar(k, v, epoch)
+                self.tb_writer.add_scalar("TRAIN_LOSS", total_train_loss.avg, global_step)
+            else:
+                continue  # only executed if the inner loop did NOT break
+            break
 
         if self.tb_writer:
             self.tb_writer.close()
