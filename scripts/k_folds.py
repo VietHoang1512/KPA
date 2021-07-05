@@ -52,3 +52,6 @@ if __name__ == "__main__":
     split_and_dump(all_df=all_df, fold_ids=constants.FOLD2, output_dir="kpm_k_folds/fold_2")
     split_and_dump(all_df=all_df, fold_ids=constants.FOLD3, output_dir="kpm_k_folds/fold_3")
     split_and_dump(all_df=all_df, fold_ids=constants.FOLD4, output_dir="kpm_k_folds/fold_4")
+    split_and_dump(all_df=all_df, fold_ids=constants.FOLD5, output_dir="kpm_k_folds/fold_5")
+    split_and_dump(all_df=all_df, fold_ids=constants.FOLD6, output_dir="kpm_k_folds/fold_6")
+    split_and_dump(all_df=all_df, fold_ids=constants.FOLD7, output_dir="kpm_k_folds/fold_7")

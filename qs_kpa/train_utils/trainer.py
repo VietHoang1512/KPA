@@ -255,6 +255,8 @@ class Trainer:
                 if self.es.early_stop:
                     self.logger.warning("Early stopping")
                     break
+            else:
+                continue  # only executed if the inner loop did NOT break
 
             # Save model after each epoch
             # output_dir = os.path.join(self.args.output_dir, f"{constants.PREFIX_CHECKPOINT_DIR}-{global_step}")
@@ -266,8 +268,7 @@ class Trainer:
 
             if self.tb_writer:
                 self.tb_writer.add_scalar("TRAIN_LOSS", total_train_loss.avg, global_step)
-            else:
-                continue  # only executed if the inner loop did NOT break
+
             break
 
         if self.tb_writer:

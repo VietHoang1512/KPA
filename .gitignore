@@ -5,6 +5,9 @@
 runs/
 tmp/
 predict/
+*.p
+*.json
+
 
 # data
 **/data
