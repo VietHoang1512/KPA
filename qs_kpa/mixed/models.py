@@ -79,7 +79,6 @@ class MixedModel(BaseModel):
         stance: torch.Tensor,
         label: torch.Tensor,
     ):
-        stance_rep = self.fc_stance(stance)
 
         topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
         argument_bert_output = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
@@ -90,14 +89,18 @@ class MixedModel(BaseModel):
         neg_key_point_bert_output = self._forward_text(
             neg_key_point_input_ids, neg_key_point_attention_mask, neg_key_point_token_type_ids
         )
+        if not self.args.stance_free:
+            stance_rep = self.fc_stance(stance)
+            argument_rep = torch.cat([stance_rep, topic_bert_output, argument_bert_output], axis=1)
+            pos_keypoint_rep = torch.cat([stance_rep, topic_bert_output, pos_key_point_bert_output], axis=1)
+            neg_keypoint_rep = torch.cat([stance_rep, topic_bert_output, neg_key_point_bert_output], axis=1)
+        else:
+            argument_rep = torch.cat([topic_bert_output, argument_bert_output], axis=1)
+            pos_keypoint_rep = torch.cat([topic_bert_output, pos_key_point_bert_output], axis=1)
+            neg_keypoint_rep = torch.cat([topic_bert_output, neg_key_point_bert_output], axis=1)
 
-        argument_rep = torch.cat([stance_rep, topic_bert_output, argument_bert_output], axis=1)
         argument_rep = self.fc_text(argument_rep)
-
-        pos_keypoint_rep = torch.cat([stance_rep, topic_bert_output, pos_key_point_bert_output], axis=1)
         pos_keypoint_rep = self.fc_text(pos_keypoint_rep)
-
-        neg_keypoint_rep = torch.cat([stance_rep, topic_bert_output, neg_key_point_bert_output], axis=1)
         neg_keypoint_rep = self.fc_text(neg_keypoint_rep)
 
         if self.args.normalize:

@@ -38,7 +38,7 @@ pip install -e .
 
 ### Quick example
 
-Currently, a pretrained KPA encoder with [RoBERTa](https://arxiv.org/abs/1907.11692) backbone is available, which can be directly downloaded from Google Drive when initializing the `KeyPointAnalysis` instance. We used the 4 last hidden state representations of the [CLS] token as the whole sentence embedding and trained it with *TupletMarginLoss* and *IntraPairVarianceLoss* on the ArgKP dataset. For the code, see [main.py](scripts/main.py).
+Currently, a pretrained KPA encoder with [RoBERTa](https://arxiv.org/abs/1907.11692) backbone is available, which can be automatically downloaded from Google Drive when initializing the `KeyPointAnalysis` instance. We used the 4 last hidden state representations of the [CLS] token as the whole sentence embedding and trained it with *TupletMarginLoss* and *IntraPairVarianceLoss* on the ArgKP dataset. For the code, see [main.py](scripts/main.py).
 
 ```python
 # Import needed libraries
@@ -51,7 +51,7 @@ encoder = KeyPointAnalysis(from_pretrained=True)
 # Model configuration
 print(encoder)
 
-# Preparing data (a tuple of (topic, statement, stance) or a list of tuple)
+# Preparing data (a tuple of (topic, statement, stance) or a list of tuples)
 inputs = [
     (
         "Assisted suicide should be a criminal offence",
@@ -73,8 +73,8 @@ output = encoder.encode(inputs, convert_to_numpy=True)
 In a [comparison](scripts/compare.py) with the baseline model-which directly uses sentence embedding from RoBERTa model, in a subset of ArgKP dataset (for avoiding target leakage), our model strongly outperforms and exhibits rich representation learning capacity. Evaluation metrics (relaxed and strict mean Average Precision) are retained from the [KPA_2021_shared_task](IBM/KPA_2021_shared_task).
 
 ```abc
-Model using RoBERTa directly: mAP strict= 0.43226294557101785 ; mAP relaxed = 0.5951448061154148
-Our pretrained model: mAP strict= 0.9170783671441644 ; mAP relaxed = 0.9722347939653511
+Model using roBERTa directly: mAP strict = 0.4633403767342183 ; mAP relaxed = 0.5991767005443296
+Our pretrained model: mAP strict = 0.9170783671441644 ; mAP relaxed = 0.9722347939653511
 ```
 
 ### Detailed training
@@ -126,7 +126,7 @@ mkdir -p $OUTPUT_DIR
 
 cp qs_kpa/pseudo_label/models.py  $OUTPUT_DIR
 
-for fold_id in 1 2 3 4
+for fold_id in 1 2 3 4 5 6 7
 do
         echo "TRAINING ON FOLD $fold_id"
         python scripts/main.py \

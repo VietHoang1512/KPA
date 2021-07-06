@@ -1,5 +1,5 @@
 export PYTHONPATH=$PWD
-for fold_id in 1 2 3 4
+for fold_id in 1 2 3 4 5 6 7
 do
         echo "TRAINING ON FOLD $fold_id"
         python scripts/main.py \

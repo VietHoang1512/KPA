@@ -58,7 +58,7 @@ class TripletModel(BaseModel):
         neg_argument_attention_mask: Optional[torch.Tensor],
         neg_argument_token_type_ids: Optional[torch.Tensor],
     ):
-        stance_rep = self.fc_stance(stance)
+
         topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
 
         key_point_bert_output = self._forward_text(
@@ -72,14 +72,18 @@ class TripletModel(BaseModel):
         neg_argument_bert_output = self._forward_text(
             neg_argument_input_ids, neg_argument_attention_mask, neg_argument_token_type_ids
         )
+        if not self.args.stance_free:
+            stance_rep = self.fc_stance(stance)
+            pos_argument_rep = torch.cat([stance_rep, topic_bert_output, pos_argument_bert_output], axis=1)
+            neg_argument_rep = torch.cat([stance_rep, topic_bert_output, neg_argument_bert_output], axis=1)
+            keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
+        else:
+            pos_argument_rep = torch.cat([topic_bert_output, pos_argument_bert_output], axis=1)
+            neg_argument_rep = torch.cat([topic_bert_output, neg_argument_bert_output], axis=1)
+            keypoint_rep = torch.cat([topic_bert_output, key_point_bert_output], axis=1)
 
-        pos_argument_rep = torch.cat([stance_rep, topic_bert_output, pos_argument_bert_output], axis=1)
         pos_argument_rep = self.fc_text(pos_argument_rep)
-
-        neg_argument_rep = torch.cat([stance_rep, topic_bert_output, neg_argument_bert_output], axis=1)
         neg_argument_rep = self.fc_text(neg_argument_rep)
-
-        keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
         keypoint_rep = self.fc_text(keypoint_rep)
 
         if self.args.normalize:

@@ -1,20 +1,15 @@
 # experiments
 *.ipynb
 **/outputs
-**.logs 
 runs/
-tmp/
-predict/
 *.p
 *.json
 
 
 # data
 **/data
-*.csv
 kpm_data
 IBM_Debater
-quora
 kpm_k_folds
 
 # assets

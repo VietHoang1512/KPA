@@ -152,7 +152,7 @@ if __name__ == "__main__":
     val_df, val_arg_df, val_kp_df, val_labels_df = get_data(gold_data_dir=data_args.directory, subset="dev")
     test_df, test_arg_df, test_kp_df, test_labels_df = get_data(gold_data_dir=data_args.test_directory, subset="test")
 
-    val_inf_df = prepare_inference_data(val_arg_df, val_kp_df)
+    val_inf_df = prepare_inference_data(val_arg_df, val_kp_df, stance_free=model_args.stance_free)
     test_inf_df = prepare_inference_data(test_arg_df, test_kp_df)
 
     train_df.to_csv("train.csv", index=False)

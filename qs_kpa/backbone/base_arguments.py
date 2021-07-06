@@ -57,3 +57,5 @@ class BaseModelArguments:
     )
 
     normalize: bool = field(default=False, metadata={"help": "Whether to normalize the embedding vectors or not."})
+
+    stance_free: bool = field(default=False, metadata={"help": "Whether to use the stance information."})

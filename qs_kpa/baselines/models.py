@@ -51,7 +51,6 @@ class BaselineModel(BaseModel):
         stance: torch.Tensor,
         label: torch.Tensor,
     ):
-        stance_rep = self.fc_stance(stance)
 
         topic_bert_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
         key_point_bert_output = self._forward_text(
@@ -59,9 +58,15 @@ class BaselineModel(BaseModel):
         )
         argument_bert_output = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
 
-        argument_rep = torch.cat([stance_rep, topic_bert_output, argument_bert_output], axis=1)
+        if not self.args.stance_free:
+            stance_rep = self.fc_stance(stance)
+            argument_rep = torch.cat([stance_rep, topic_bert_output, argument_bert_output], axis=1)
+            keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
+        else:
+            argument_rep = torch.cat([topic_bert_output, argument_bert_output], axis=1)
+            keypoint_rep = torch.cat([topic_bert_output, key_point_bert_output], axis=1)
+
         argument_rep = self.fc_text(argument_rep)
-        keypoint_rep = torch.cat([stance_rep, topic_bert_output, key_point_bert_output], axis=1)
         keypoint_rep = self.fc_text(keypoint_rep)
 
         if self.args.normalize:
@@ -114,16 +119,19 @@ class ClassificationModel(BaseModel):
         stance: torch.Tensor,
         label: torch.Tensor,
     ):
-        stance_ouput = self.fc_stance(stance)
+
+        if not self.args.stance_free:
+            stance_rep = self.fc_stance(stance)
+
         topic_output = self._forward_text(topic_input_ids, topic_attention_mask, topic_token_type_ids)
         key_point_output = self._forward_text(key_point_input_ids, key_point_attention_mask, key_point_token_type_ids)
         argument_output = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
 
-        output1 = torch.cat([stance_ouput, topic_output, key_point_output, argument_output], axis=1)
+        output1 = torch.cat([stance_rep, topic_output, key_point_output, argument_output], axis=1)
         output1 = self.fc(output1)
         prob1 = torch.sigmoid(output1)
 
-        output2 = torch.cat([stance_ouput, topic_output, argument_output, key_point_output], axis=1)
+        output2 = torch.cat([stance_rep, topic_output, argument_output, key_point_output], axis=1)
         output2 = self.fc(output2)
         prob2 = torch.sigmoid(output2)
 

@@ -106,7 +106,7 @@ def get_data(gold_data_dir: str, subset: str) -> pd.DataFrame:
     return merged_df, arg_df, kp_df, labels_df
 
 
-def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.DataFrame:
+def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame, stance_free: bool = False) -> pd.DataFrame:
     """
     Pair up argmument and keypont to generate score.
 
@@ -138,7 +138,7 @@ def prepare_inference_data(arg_df: pd.DataFrame, kp_df: pd.DataFrame) -> pd.Data
             argument_text = argument["argument"]
             for keypoint in keypoints:
                 keypoint_stance = keypoint["stance"]
-                if keypoint_stance != argument_stance:
+                if (keypoint_stance != argument_stance) and (not stance_free):
                     continue
                 keypoint_text = keypoint["key_point"]
                 keypoint_id = keypoint["key_point_id"]

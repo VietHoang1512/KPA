@@ -1,5 +1,5 @@
 export PYTHONPATH=$PWD
-for fold_id in 1 2 3 4 
+for fold_id in 1 2 3 4 5 6 7
 do
         python scripts/main.py \
                 --experiment "baseline" \
@@ -16,8 +16,8 @@ do
                 --overwrite_output_dir \
                 --num_train_epochs 15 \
                 --early_stop 5 \
-                --train_batch_size 156 \
-                --val_batch_size 156 \
+                --train_batch_size 64 \
+                --val_batch_size 64 \
                 --do_train \
                 --evaluate_during_training \
                 --warmup_steps 0 \

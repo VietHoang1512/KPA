@@ -53,17 +53,18 @@ class QABertModel(BaseModel):
         stance: torch.Tensor,
         label: torch.Tensor,
     ):
-        stance_rep = self.fc_stance(stance)
 
-        key_point_bert_output = self._forward_text(
-            key_point_input_ids, key_point_attention_mask, key_point_token_type_ids
-        )
-        argument_bert_output = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
+        argument_rep = self._forward_text(key_point_input_ids, key_point_attention_mask, key_point_token_type_ids)
+        keypoint_rep = self._forward_text(argument_input_ids, argument_attention_mask, argument_token_type_ids)
 
-        argument_rep = torch.cat([stance_rep, argument_bert_output], axis=1)
+        if not self.args.stance_free:
+            stance_rep = self.fc_stance(stance)
+            argument_rep = torch.cat([stance_rep, argument_rep], axis=1)
+            keypoint_rep = torch.cat([stance_rep, keypoint_rep], axis=1)
+
         argument_rep = self.fc_text(argument_rep)
-        keypoint_rep = torch.cat([stance_rep, key_point_bert_output], axis=1)
         keypoint_rep = self.fc_text(keypoint_rep)
+
         if self.args.normalize:
             argument_rep = F.normalize(argument_rep, p=2, dim=1)
             keypoint_rep = F.normalize(keypoint_rep, p=2, dim=1)

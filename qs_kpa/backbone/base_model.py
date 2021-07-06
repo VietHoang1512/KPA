@@ -13,6 +13,11 @@ class BaseModel(nn.Module):
     def __init__(self, args: BaseModelArguments):
         super().__init__()
 
+        if args.stance_free:
+            args.stance_dim = 0
+        else:
+            self.fc_stance = nn.Linear(1, args.stance_dim)
+
         self.args = args
         self.config = AutoConfig.from_pretrained(
             self.args.model_name_or_path if self.args.model_name_or_path else self.args.model_name,
@@ -34,8 +39,6 @@ class BaseModel(nn.Module):
         else:
             self.fc_text = nn.Linear(fusion_dim, args.text_dim)
 
-        self.fc_stance = nn.Linear(1, self.args.stance_dim)
-
         if self.args.distance == "euclidean":
             self.distance_metric = SiameseDistanceMetric.EUCLIDEAN
         elif self.args.distance == "manhattan":
@@ -46,8 +49,6 @@ class BaseModel(nn.Module):
             raise NotImplementedError(
                 f"Embedding similarity function {self.args.distance} is not implemented yet. Must be `euclidean`, `manhattan` or `consine`"
             )
-
-        logger.warning(f"Using {self.args.distance} distance function")
 
     def _init_weights(self, module: nn.Module):
         if isinstance(module, nn.Linear):
@@ -63,10 +64,7 @@ class BaseModel(nn.Module):
             module.weight.data.fill_(1.0)
 
     def _forward_text(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, token_type_ids: torch.Tensor):
-        # if self.model_type in ["xlnet"]:
-        #     input_ids = torch.squeeze(input_ids, 1)
-        #     attention_mask = torch.squeeze(attention_mask, 1)
-        #     token_type_ids = torch.squeeze(token_type_ids, 1)
+
         if self.model_type in ["t5", "distilbert", "electra", "bart", "xlm", "xlnet", "camembert", "longformer"]:
             output = self.bert_model(input_ids, attention_mask=attention_mask)
         else:

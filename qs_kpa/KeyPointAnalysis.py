@@ -113,8 +113,6 @@ class KeyPointAnalysis(object):
     ) -> Union[List[torch.Tensor], np.ndarray, torch.Tensor]:
 
         if convert_to_tensor:
-            if convert_to_numpy:
-                logger.warning("Return torch.Tensor embeddings.")
             convert_to_numpy = False
 
         input_was_tuple = False

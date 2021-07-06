@@ -1,5 +1,5 @@
 export PYTHONPATH=$PWD
-for fold_id in 1 2 3 4 
+for fold_id in 1 2 3 4 5 6 7
 do
         python scripts/main.py \
                 --experiment "qa" \
