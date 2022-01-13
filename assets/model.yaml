@@ -1,0 +1,12 @@
+batch_norm: false
+cache_dir: null
+distance: cosine
+drop_rate: 0.2
+margin: 0.3
+model_name: roberta-base
+model_name_or_path: roberta-base
+n_hiddens: 4
+normalize: false
+stance_dim: 32
+text_dim: 256
+tokenizer: roberta-base

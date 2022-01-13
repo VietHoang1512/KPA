@@ -1,0 +1,14 @@
+scipy
+torch
+gdown
+pandas
+numpy
+sklearn
+tqdm
+seaborn
+matplotlib
+transformers
+tensorboardX
+datasets
+accelerate
+pytorch-metric-learning

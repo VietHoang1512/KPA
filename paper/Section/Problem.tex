@@ -1,0 +1,7 @@
+\section{Problem definition}
+\label{sec:problem}
+In this shared task, we are provided with a dataset consisting of 28 different topics. Each topic contains a set of associated arguments and key points in the form of matching (with label 1) or non-matching (with label 0) pairs. The stances of these statements (whether a claim agrees or disagrees with its topic) are also exposed, we further evaluate the impact of this information in section \ref{sec:stance}.
+
+In short, the Key Point Matching problem is formulated as follows: Given a controversial topic $T$ with a list of $m$ arguments and $n$ key points $A_1, A_2, \dots, A_m ;\;K_1, K_2, \dots, K_n$, along with their corresponding stances $S_1, S_2, \dots, S_{m+n} \; (S_i \in \{-1, 1\})$, which imply the attack or support relationships against the topic, our task is to rank key points that have the same stance with an input argument by the matching score. This priority is dependent on both the topic and the semantic of statements.
+
+

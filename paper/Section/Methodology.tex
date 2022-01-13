@@ -1,0 +1,91 @@
+\section{Methodology}
+\label{sec:method}
+
+The proposed MTS architecture is graphically shown in figure \ref{fig:model}. It takes four separate inputs: (i) discussed topic, (ii) first statement, (iii) second statement, and (iv) their stance toward the topic. The final output is the similarity score of the fed in statements with respect to the main context. In the remainder of this section, we would like to describe three main components of MTS: encoding, context integration and statement encoding layers.
+
+\subsection{Data preparation}
+\label{sec:prepare}
+We observe that a small percentage of the arguments ($4.71\%$) belong to two or more key points, while the rest are matched with at most one. For that reason, a straightforward idea is gathering arguments, which belong to the same key point, and label the clusters in order. In other words, each cluster is represented by a key point $K_i$, contains $K_i$ and its matching arguments. Our clustering technique results in the fact that there are a small number of arguments that belong to multiple clusters. Arguments that do not match any of the key points are grouped into the NON-MATCH set.
+
+Intuitively, if two different arguments support the same key point, they tend to convey similar meanings and should be considered as a matching pair of statements. Conversely, statements from different clusters are considered non-match in our approach. This pseudo-label method thus utilizes the similar semantic of within-cluster documents and enhances the model robustness. In the remainder of this paper, those arguments that come from the same cluster are referred to as positive pairs, otherwise, they are negative pairs.
+
+During training, we use each key point and its matching/non-matching arguments (based on the annotation in the ArgKP-2021 dataset) in a mini-batch. Moreover, we also sample a small proportion of the NON-MATCH arguments and merge them into the mini-batch. Specifically, all the NON-MATCH arguments are considered to come from different and novel clusters. Because the definition of positive/negative statement pairs is well-defined, we can easily compute the loss in each mini-batch with a usual metric learning loss \citep{chopra2005learning, yu2019deep}.% A contrastive loss will be employed to enclose the distance between intra-cluster samples as well as to enlarge the distance between that of inter-cluster ones.
+
+\subsection{Encoding layer}
+
+We first extract the contextualized representation for textual inputs using the RoBERTa \citep{liu2019roberta} model. We adopt a canonical method \citep{sun2019fine} to achieve the final embedding of a given input, which is concatenating the last four hidden states of the [CLS] token. These embeddings are fed into the context integration layer as an aggregate representation for topics, arguments and key points. For example, a statement vector at this point is denoted as \footnote{For a consistent notation, statements and stances are denoted by uppercase letters: $X$ and $S$}: 
+\begin{align*}
+\mathbf{h}^X = [\:h^X_1, h^X_2, \dots, h^X_{4\times768}\:]\;\; (h^X_i \in \R ) \\
+    = [\:h^X_1, h^X_2, \dots, h^X_{3072}\:] \hspace*{20mm}
+\end{align*}
+with 768 is the number of hidden layers produced by the RoBERTa-base model. 
+
+For the stance encoding, we employ a fully-connected network with no activation function to map the scalar input to a $N$-dimensional vector space. The representation of each topic, statement and stance are denoted as $\mathbf{h}^T, \mathbf{h}^X$ and $\mathbf{h}^S$, respectively.
+
+\subsection{Context integration layer}
+
+After using the RoBERTa backbone and a shallow neural network to extract the embeddings acquired from multiple inputs, we conduct a simple concatenation with the aim of incorporating the topic (i.e. context) and stance information into its argument/key point representations. After this step, the obtained vector for each statement is ($[;]$ notation indicates the concatenation operator):
+\begin{align*}
+\mathbf{v}^X = [\mathbf{h}^S; \mathbf{h}^T; \mathbf{h}^X] 
+\end{align*}
+where $\mathbf{v}^X \in \R^{N+2\times3072}$
+
+% Since these
+\subsection{Statement encoding layer}
+The statement encoding component has another fully-connected network on top of the context integration layer to get the final $D$-dimensional embeddings for key points or arguments:
+\begin{align*}
+\mathbf{e}^X = \mathbf{v}^X\:\mathbf{W} + \mathbf{b}
+\end{align*}
+where $\mathbf{W} \in \R^{ (N+6144) \times D}$ and $ \mathbf{b} \in \R^{D}$ are the weight and bias parameters.
+
+Concretely, training our model is equivalent to learning a function $f(S,T,X)$ that maps the similar statements onto close points and dissimilar ones onto distant points in $\R^{ (N+6144) \times D}$.
+
+\subsection{Training}
+\label{sec:training}
+In each iteration, we consider each input statement from the incoming mini-batch as an anchor document and sample positive/negative documents from within/inter clusters. For calculating the matching score between two statements, we compute the cosine distance of their embeddings:
+\begin{align}
+\mathcal{D}_{\mathrm{cosine}}(\mathbf{e}^{X_1}, \mathbf{e}^{X_2}) =
+1 - \mathrm{cos}(\mathbf{e}^{X_1}, \mathbf{e}^{X_2}) \label{eq:cosine}\\
+= 1 - \frac{{\mathbf{e}^{X_1}}^T \mathbf{e}^{X_2}}
+{||\mathbf{e}^{X_1}||_2 \: ||\mathbf{e}^{X_2}||_2} \nonumber
+\end{align}
+
+Empirical results show that cosine distance yields the best performance compared to Manhattan distance ($||\mathbf{e}^{X_1} - \mathbf{e}^{X_2}||_1$) and Euclidean distance ($||\mathbf{e}^{X_1} - \mathbf{e}^{X_2}||_2$). Hence, we use cosine as the default distance metric throughout our experiments. We also revisit several loss functions, such as contrastive loss \citep{chopra2005learning}, triplet loss \citep{dong2018triplet} and tuplet margin loss \citep{yu2019deep}. Unlike previous work, \citet{yu2019deep} use another distance metric, which will be described below.
+
+Assume that a mini-batch consists of $k+1$ samples $\{X_a, X_p, X_{n_{1}},X_{n_{2}}, \dots, X_{n_{k-1}}\}$, which satisfies the tuplet constraint: $X_p$ is a positive statement whereas $X_{n_i}$ are $X_a$'s negative statements w.r.t $X_a$. Mathematically, the tuplet margin loss function is defined as:
+\begin{align*}
+\mathcal{L}_{\text{tuplet}} = \log(1 + \sum_{i=1}^{k-1} 
+\mathrm{e}^{s(\mathrm{cos}\:\theta_{an_i} - \mathrm{cos}\:(\theta_{ap}-\beta))} )
+\end{align*}
+where  $\theta_{ap}$ is the angle between $e^{X_a}$ and $e^{X_p}$;\; $\theta_{an_i}$ is the angle between $e^{X_a}$ and $e^{X_{n_{i}}}$. $\beta$ is the margin hyper-parameter, which imposes the distance between negative pair to be larger than $\beta$. Finally, $s$ acts like a scaling factor.
+
+Additionally, \citet{yu2019deep} also introduced the intra-pair variance loss, which was theoretically proven to mitigate the intra-pair variation and improve the generalizability. In MTS, we use a weighted combination of both tuplet margin and intra-pair variance as our loss function. The formulation of the latter one is:
+\begin{align*}
+\mathcal{L}_{pos} = \mathbb{E}[(1-\epsilon)\:\mathbb{E}[\mathrm{cos}\:\theta_{ap}] - \mathrm{cos}\:\theta_{ap}]^2_+ \\
+\mathcal{L}_{neg} = \mathbb{E}[\mathrm{cos}\:\theta_{an} - (1+\epsilon)\:\mathbb{E}[\mathrm{cos}\:\theta_{an}]^2_+ \\
+\mathcal{L}_{\mathrm{intra-pair}} = \mathcal{L}_{pos} + \mathcal{L}_{neg} \hspace*{10mm}
+\end{align*}
+where $[\cdot]_+ = \mathrm{max}(0, \cdot )$.
+
+As pointed out by \citet{hermans2017defense, wu2017sampling}, training these siamese neural networks raises a couple of issues regarding easy/uninformative examples bias. In fact, if we keep feeding random pairs, more easy ones are included and prevent models from training. Hence, a hard mining strategy becomes crucial for avoiding learning from such redundant pairs. In MTS, we adapt the multi-similarity mining from \citet{wang2019multi}, which identifies a sample's hard pairs using its neighbors.
+
+Given a pre-defined threshold $\epsilon$, we select the negative pairs if they have the cosine similarity greater than the hardest positive pair, minus $\epsilon$. For instance, let $X_a$ be a statement, which has its positive and negative sets of statements denoted by $\mathcal{P}_{X_a}$ and $\mathcal{N}_{X_a}$, respectively.
+A negative pair of statements $\{X_a, X_n\}$ is chosen if:
+\begin{align*}
+\mathrm{cosine}(\mathbf{e}^{X_a}, \mathbf{e}^{X_n}) \geq \underset{X_i\in \mathcal{P}_{X_a}}\min \mathrm{cosine}(\mathbf{e}^{X_a}, \mathbf{e}^{X_i})-\epsilon
+\end{align*}
+Such pairs are referred to as hard negative pairs, we carry out a similar process to form hard positive pairs. If a positive pair $\{X_a, X_p\}$ is selected, then:
+\begin{align*}
+\mathrm{cosine}(\mathbf{e}^{X_a}, \mathbf{e}^{X_p}) \leq \underset{X_i\in \mathcal{N}_{X_a}}{\max}   \mathrm{cosine}(\mathbf{e}^{X_a}, \mathbf{e}^{X_i})+\epsilon
+\end{align*}
+\subsection{Inference}
+At inference time, we pair up the arguments and key points that debate on a topic under the same stance. Afterward, we compute the matching score based on the angle between their embeddings. For instance, an argument $A$ and key point $K$ will have a matching score of:
+\begin{align*}
+% \mathbf{u}^A = \frac{\mathbf{e}^A}{||\mathbf{e}^A||_2} \; \; \;; \; \; \;
+% \mathbf{u}^K = \frac{\mathbf{e}^K}{||\mathbf{e}^K||_2} \\
+% \vspace*{2mm}\mathrm{score}(\mathbf{e}^A, \mathbf{e}^K) = \frac{\pi - \angle\:(\mathbf{u}^A, \mathbf{u}^K)}{\pi-\beta}\\
+\mathrm{score}(\mathbf{e}^A, \mathbf{e}^K) = 1 - \mathcal{D}_{\mathrm{cosine}}(\mathbf{e}^A, \mathbf{e}^K)\\
+= \mathrm{cos}(\mathbf{e}^A, \mathbf{e}^K)\hspace*{12.5mm}
+\end{align*}
+
+The right-hand side function squashes the score into the probability interval of $[0,1)$ and compatible with the presented loss function in section \ref{sec:training}.
