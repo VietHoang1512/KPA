@@ -6,7 +6,7 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1RNZsW30ulRs5Avkwe8Jqfc8zRbhpmUbD?usp=sharing)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/776410d9c5ea4290b0301d5f70bec9b5)](https://www.codacy.com/gh/VietHoang1512/KPA/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=VietHoang1512/KPA&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0cfb1d0186094b169dd1cf4049e8ac3e)](https://www.codacy.com/gh/VietHoang1512/KPA/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=VietHoang1512/KPA&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/viethoang1512/kpa/badge?s=805044f88408096519ce8ab36564bb8b98e8e9ba)](https://www.codefactor.io/repository/github/viethoang1512/kpa)
 
 </div>
@@ -171,3 +171,15 @@ done
 ```
 
 Training with the previously defined hyper-parameters yields above mentioned mAP score. Other approaches could be found in [bin](bin).
+
+### Citation
+
+```
+@inproceedings{phan2021matching,
+  title={Matching the statements: A simple and accurate model for key point analysis},
+  author={Phan, Hoang and Nguyen, Long and Doan, Khanh},
+  booktitle={Proceedings of the 8th Workshop on Argument Mining},
+  pages={165--174},
+  year={2021}
+}
+```
