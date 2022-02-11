@@ -23,7 +23,7 @@ This library is based on the Transformers library by HuggingFace. **Keypoint Ana
 
 #### July 4, 2021
 
-- Our method achieved the 4th position in track I of the shared task [[paper]](https://aclanthology.org/2021.argmining-1.17/), [[slide]](https://docs.google.com/presentation/d/1qLgaPZshu2uVeC0Mn5vCYa-eLm-Wvsvc8_VysocMHr4/edit?usp=sharing)
+- Our method achieved the 4th position in track I of the shared task [[paper]](https://paperswithcode.com/paper/matching-the-statements-a-simple-and-accurate), [[slide]](https://docs.google.com/presentation/d/1qLgaPZshu2uVeC0Mn5vCYa-eLm-Wvsvc8_VysocMHr4/edit?usp=sharing)
 
 ### Installation
 
